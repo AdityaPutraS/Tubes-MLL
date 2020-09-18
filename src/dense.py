@@ -61,13 +61,13 @@ class Dense:
         self.weight = weight.copy()
 
     def forward(self, x):
-        # Melakukan feed-forward lalu mengembalikan output yang belum di aktifasi & sudah di aktifasi
+        # Melakukan feed-forward lalu mengembalikan output yang belum di aktifasi
         # Todo : Reshape x sesuai input_shape
         x = np.reshape(x, (-1, self.features))
         x = np.hstack((np.ones((x.shape[0], 1)), x))
         v = np.reshape(np.dot(x, self.weight), tuple(
             [-1] + list(self.output_shape)))
-        return (v, self.activation(v))
+        return v
 
     def calcPrevDelta(self, neuron_input, delta, debug=False):
         '''

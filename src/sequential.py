@@ -25,7 +25,7 @@ class Sequential:
     # Lakukan feed-forward
     temp = x.copy()
     for l in self.layers:
-      temp = l.forward(temp)[1].copy()
+      temp = l.activation(l.forward(temp))
     return temp
 
   def calculateError(self, x, y):
@@ -50,76 +50,30 @@ class Sequential:
         else:
           raise TypeError("Unknown layer")
 
+  def calcDelta(self, rawInput, yPred, yTarget, debug=False):
+    # Menghitung delta output layer
+    lastLayer = self.layers[-1]
+    lastX = rawInput[-1]
+    delta = lastLayer.activation_deriv(lastX) * (yTarget - yPred)
+    delta = delta.ravel()
+    listDelta = [delta]
 
-  def fit(self, xData, yData, lr=0.001, epochs=1, debug=False, batch_size=1):
-    # Training model dengan xData agar bisa menghasilkan yData
-    # Training dilakukan dengan konsep mini_batch, update weight dilakukan setiap {batch_size}
+    # Hitung delta setiap layer menggunakan layer setelahnya, mulai dari layer terakhir
+    for i in range(len(self.layers)-1, -1, -1):
+      prev_delta = self.layers[i].calcPrevDelta(rawInput[i], delta, debug=debug)
+      listDelta.append(delta)
+      delta = prev_delta
+
+    return listDelta
+
+  # Fit n epoch, n batch
+  def fit(self, xData, yData, lr=0.001, epochs=1, batch_size=1, debug=False):
     listErr = []
     for e in range(epochs):
-      numIter = int(np.ceil(xData.shape[0] / batch_size))
-      # Mini batch
-      for iter in range(numIter):
-        deltaWeight = []
-        # Hitung start dan end dari minibatch iterasi ke {iter}
-        start = iter * batch_size
-        end = start + batch_size
-        # Untuk setiap data dalam minibatch, hitung deltaWeightnya
-        for data in zip(xData[start:end], yData[start:end]):
-          x = np.array([data[0]])
-          y = np.array([data[1]])
-          temp = x.copy()
-
-          # InputListNotActivated berisi sekumpulan output dari tiap layer (input dari layer selanjutnya) 
-          #   tapi belum melewati fungsi aktivasi
-          # InputListActivated berisi mirip seperti inputListNotActivated tapi sudah melewati aktivasi
-          # InputListNotActivated berguna untuk menghitung deltaError tiap layer
-          # InputListActivated berguna untuk melakukan backpropagation
-          inputListNotActivated = [x]
-          inputListActivated = [x]
-
-          # Lakukan feed-forward untuk data {data}
-          for l in self.layers:
-            out = l.forward(temp)
-            temp = out[1].copy()
-            inputListNotActivated.append(out[0].copy())
-            inputListActivated.append(out[1].copy())
-
-          # Hitung delta output layer
-          delta = self.layers[-1].activation_deriv(inputListNotActivated[-1]) * (y - temp)
-          delta = delta.ravel()
-          listDelta = [delta]
-
-          # Hitung delta setiap layer menggunakan layer setelahnya, mulai dari layer terakhir
-          for i in range(len(self.layers)-1, -1, -1):
-            prev_delta = self.layers[i].calcPrevDelta(inputListNotActivated[i], delta, debug=debug)
-            listDelta.append(delta)
-            delta = prev_delta
-
-          # Lakukan backpropagation untuk setiap layer, mulai dari layer terakhir
-          tempDeltaWeight = []
-          for i in range(len(self.layers)-1, -1, -1):
-            tempDeltaWeight.append(self.layers[i].backprop(inputListActivated[i], listDelta[-1-i], lr, debug=debug))
-
-          # Simpan deltaWeight ke dalam list terlebih dahulu
-          deltaWeight.append(tempDeltaWeight)
-
-        # End for mini batch
-
-        # Ide : Hitung jumlah delta weight tiap layer, terus update weight tiap layer dengan rata rata deltaWeight layer itu
-        # Hitung total
-        totalDeltaWeight = deltaWeight[0]
-        for i in range(len(self.layers)):
-          for j in range(1, len(deltaWeight)):
-            totalDeltaWeight[i] += deltaWeight[j][i]
-        
-        # Update weight
-        for idx, layer in enumerate(self.layers):
-          layer.updateWeight(totalDeltaWeight[-idx-1] / (end-start))
-
-      # End for iterasi semua minibatch
+      self._fit_1_epoch(xData, yData, lr=lr, debug=debug, batch_size=batch_size)
 
       # Hitung error untuk epoch ini
-      epochErr = self.calculateError(x, y)
+      epochErr = self.calculateError(xData, yData)
 
       # Simpan error dalam list agar bisa di plot nantinya
       listErr.append(epochErr)
@@ -128,3 +82,55 @@ class Sequential:
       if (e%100==99):
         print('Epoch ', e+1, '= error : ', epochErr)
     return listErr
+
+  # Fit 1 epoch, n batch
+  def _fit_1_epoch(self, xData, yData, lr=0.001, batch_size=1, debug=False):
+    # Training dilakukan dengan konsep mini_batch, update weight dilakukan setiap {batch_size}
+    numBatch = int(np.ceil(xData.shape[0] / batch_size))
+
+    for iter in range(numBatch):
+      start = iter * batch_size
+      end = start + batch_size
+
+      # Untuk setiap data dalam minibatch, hitung deltaWeightnya
+      deltaWeight = []
+      for data in zip(xData[start:end], yData[start:end]):
+        x = np.array([data[0]])
+        y = np.array([data[1]])
+        deltaWeight.append(self._fit_1_batch(x, y, lr=lr, debug=debug))
+        # End for mini batch
+
+      # Ide : Hitung jumlah delta weight tiap layer, terus update weight tiap layer dengan rata rata deltaWeight layer itu
+      # Hitung total
+      totalDeltaWeight = deltaWeight[0]
+      for i in range(len(self.layers)):
+        for j in range(1, len(deltaWeight)):
+          totalDeltaWeight[i] += deltaWeight[j][i]
+
+      # Update weight
+      for idx, layer in enumerate(self.layers):
+        layer.updateWeight(totalDeltaWeight[-idx-1] / (end-start))
+
+  # Fit 1 batch
+  def _fit_1_batch(self, xData, yData, lr=0.001, debug=False):
+    # rawInput berisi input setiap layer secara raw(belum di aktivasi layer sebelumnya)
+    rawInput = [xData]
+
+    # Lakukan feed-forward untuk data {data}
+    temp = xData.copy()
+    for l in self.layers:
+      out = l.forward(temp)
+      temp = l.activation(out)
+      rawInput.append(out.copy())
+
+    # Hitung delta setiap layer
+    listDelta = self.calcDelta(rawInput, temp, yData)
+
+    # Lakukan backpropagation untuk setiap layer, mulai dari layer terakhir
+    deltaWeight = []
+    for i in range(len(self.layers)-1, 0, -1):
+      l = self.layers[i]
+      deltaWeight.append(l.backprop(l.activation(rawInput[i]), listDelta[-1-i], lr, debug=debug))
+    deltaWeight.append(self.layers[0].backprop(rawInput[0], listDelta[-1], lr, debug=debug))
+
+    return deltaWeight

@@ -65,12 +65,12 @@ x_train, x_test, y_train, y_test = train_test_split(iris_x, iris_y, test_size=0.
 # Seed random numpy agar hasil experimen sama
 np.random.seed(2)
 model = Sequential()
-model.loadModel('iris.json')
-# model.add(Dense(4, input_shape=(4, )))
-# model.add(Dense(3, activation='sigmoid'))
-# model.add(Dense(2, activation='sigmoid'))
-# model.add(Dense(1, activation='sigmoid'))
-# history = model.fit(iris_x, iris_y.reshape(iris_y.shape[0], 1), epochs=2000, debug=False, lr=0.14, batch_size=30)
+# model.loadModel('iris.json')
+model.add(Dense(4, input_shape=(4, )))
+model.add(Dense(3, activation='sigmoid'))
+model.add(Dense(2, activation='sigmoid'))
+model.add(Dense(1, activation='sigmoid'))
+history = model.fit(iris_x, iris_y.reshape(iris_y.shape[0], 1), epochs=2000, debug=False, lr=0.14, batch_size=30)
 # plt.plot(history)
 
 predIris = model.forward(np.reshape(iris_x, (150, 2, 2)))
