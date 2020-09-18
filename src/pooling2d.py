@@ -7,7 +7,7 @@ class Pooling2D(object):
     self.padding = padding
     self.pool_mode = pool_mode
 
-  def forward(self, x_data):
+  def pooling2d(self, x_data):
     if self.padding != None:
       x = np.pad(x_data, self.padding, mode='constant')
     else:
@@ -28,14 +28,23 @@ class Pooling2D(object):
       return pool_output.max(axis=(1,2)).reshape(output_shape)
     elif self.pool_mode == 'avg':
       return pool_output.mean(axis=(1,2)).reshape(output_shape)
+
+  def forward(self, feature_maps):
+    result = []
+    for fmap in feature_maps:
+      result.append(self.pooling2d(fmap))
+
+    return np.array(result)
     
 if __name__ == "__main__":
-  test_mat = np.array(
+  test_fmap = np.array(
       [[1,2,3,4],
        [5,6,7,8],
        [9,10,11,12],
        [13,14,15,16]]
   )
 
+  test_fmaps = np.array([test_fmap, test_fmap*2])
+
   pooling_layer = Pooling2D(pool_shape=(2,2), stride=2, pool_mode='max')
-  print(pooling_layer.forward(test_mat, (2, 2), 2))
+  print(pooling_layer.forward(test_fmaps, (2, 2), 2))
