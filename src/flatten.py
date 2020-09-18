@@ -13,5 +13,6 @@ class Flatten:
 		self.output_shape = (output_x, 1)
 
 	def forward(self, mat):
+		assert self.input_shape == np.shape(mat)
 		flattened_matrix = np.ndarray.flatten(mat)
 		return flattened_matrix
