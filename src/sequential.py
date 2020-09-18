@@ -1,6 +1,7 @@
 import numpy as np
 import json
 from dense import *
+from flatten import *
 
 class Sequential:
   # Representasi suatu model dimana perhitungan dilakukan sekuensial (layer per layer)

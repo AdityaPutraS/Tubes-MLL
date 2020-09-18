@@ -4,6 +4,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 from sequential import *
 from dense import *
+from flatten import *
 
 ## Gist originally developed by @craffel and improved by @ljhuang2017
 
