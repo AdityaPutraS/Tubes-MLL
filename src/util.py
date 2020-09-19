@@ -1,5 +1,6 @@
 import numpy as np
 # Utility
+
 # mat = W * H * C
 # kernel = num_filter * C_Kernel * W_Kernel * H_Kernel
 # Output = (_ * _ * num_filter)
@@ -20,6 +21,7 @@ def conv2d(mat, kernel, pad, stride):
           output[i, j, filter] += np.tensordot(padded_mat[start_x:end_x, start_y:end_y, chan], kernel[filter, min(chan, kernel_c-1), :, :]) 
   return output
 
+# Pooling function for 2d matrices
 def pooling2d(x_data, pool_shape, stride, padding, pool_mode = 'max'):
   if padding != None:
     x = np.pad(x_data, padding, mode='constant')

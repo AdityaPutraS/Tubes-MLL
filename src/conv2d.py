@@ -3,12 +3,14 @@ from activation import *
 from util import conv2d
 
 class Conv2D:
-  def __init__(self, kernel, pad, stride):
-    self.kernel = kernel
+  def __init__(self, num_filter, pad, stride, input_shape=(1, 1, 3), activation='relu'):
+    self.kernel = np.random.random((num_filter, input_shape[2], w_filter, h_filter)) # w_filter and h_filter TBD @adityaputras
     self.pad = pad
     self.stride = stride
-    self.activation = relu # detector part
-    self.activation_deriv = relu_deriv
+
+    if (activation == 'relu'):
+      self.activation = relu # detector part
+      self.activation_deriv = relu_deriv
 
   def updateInputShape(self, input_shape):
     self.input_shape = input_shape
