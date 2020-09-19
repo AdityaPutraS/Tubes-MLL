@@ -20,21 +20,22 @@ class Pooling2D(object):
     pass
 
   def getSaveData(self):
-		data = {
+    data = {
       'name': 'Pooling2D',
       'input_shape' : self.input_shape,
       'pool_shape': self.pool_shape,
       'stride': self.stride,
       'padding': self.padding,
       'pool_mode': self.pool_mode
-    }
-		return data
+      }
+
+    return data
 
   def loadData(self, data):
     pass # TBD
 
   def calcPrevDelta(self, neuron_input, delta, debug=False):
-		return delta
+    return delta
 
   def forward(self, feature_maps):
     result = []
@@ -46,10 +47,10 @@ class Pooling2D(object):
     return result
 
   def backprop(self, neuron_input, delta, lr=0.001, debug=False):
-		pass
+    pass
 
   def updateWeight(self, deltaWeight, debug=False):
-		pass
+    pass
 
 if __name__ == "__main__":
   test_fmap = np.array(
@@ -60,6 +61,46 @@ if __name__ == "__main__":
   )
 
   test_fmaps = np.array([test_fmap, test_fmap*2])
-
+  print("test 2D feature maps shape:", test_fmaps.shape)
   pooling_layer = Pooling2D(pool_shape=(2,2), stride=2, pool_mode='max')
-  print(pooling_layer.forward(test_fmaps, (2, 2), 2))
+  result = pooling_layer.forward(test_fmaps)
+  print(result)
+  print("result shape:", result.shape)
+
+  test_3d_fmaps = np.array([
+    [
+      [
+        [19, 66, 10],
+        [80, 99, 10],
+        [155, 148, 255]
+      ], [
+        [198, 254, 12],
+        [88, 10, 12],
+        [90, 19, 255]
+      ], [
+        [8, 1, 13],
+        [113, 3, 13],
+        [19, 1, 255]
+      ]
+    ], [
+      [
+        [1, 10, 14],
+        [32, 31, 14],
+        [10, 0, 123]
+      ], [
+        [9, 9, 15],
+        [10, 15, 50],
+        [99, 112, 0]
+      ], [
+        [10, 1, 12],
+        [11, 11, 12],
+        [19, 100, 111]
+      ]
+    ]
+  ])
+
+  print("\ntest 3D feature maps shape:", test_3d_fmaps.shape)
+  pooling_3d_layer = Pooling2D(pool_shape=(2,2), stride=1, pool_mode='avg')
+  result = pooling_3d_layer.forward(test_3d_fmaps)
+  print(result)
+  print("result shape:", result.shape)

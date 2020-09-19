@@ -22,7 +22,8 @@ def conv2d(mat, kernel, pad, stride):
   return output
 
 # Pooling function for 2d matrices
-def pooling2d(x_data, pool_shape, stride, padding, pool_mode = 'max'):
+def one_channel_pooling(x_data, pool_shape, stride, padding, pool_mode = 'max'):
+  # do this for each channel
   if padding != None:
     x = np.pad(x_data, padding, mode='constant')
   else:
@@ -43,3 +44,18 @@ def pooling2d(x_data, pool_shape, stride, padding, pool_mode = 'max'):
     return pool_output.max(axis=(1,2)).reshape(output_shape)
   elif pool_mode == 'avg':
     return pool_output.mean(axis=(1,2)).reshape(output_shape)
+
+def pooling2d(x_data, pool_shape, stride, padding, pool_mode = 'max'):
+  # pooling can be done on however many channel there is
+  if (len(x_data.shape) == 2):
+    # data consist of only single channel
+    return one_channel_pooling(x_data, pool_shape, stride, padding, pool_mode)
+  elif (len(x_data.shape) == 3):
+    # data consist of n channels
+    data = np.moveaxis(x_data, 2, 0) # change channels last to channels first formats
+
+    pooling_output = []
+    for data_channel in data:
+      pooling_output.append(one_channel_pooling(data_channel, pool_shape, stride, padding, pool_mode))
+
+    return np.moveaxis(np.array(pooling_output), 0, 2) # change channels first to channels last format
