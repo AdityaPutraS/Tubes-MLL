@@ -21,6 +21,7 @@ class Pooling2D(object):
 
   def getSaveData(self):
 		data = {
+      'name': 'Pooling2D',
       'input_shape' : self.input_shape,
       'pool_shape': self.pool_shape,
       'stride': self.stride,

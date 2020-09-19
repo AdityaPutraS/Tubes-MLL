@@ -16,7 +16,10 @@ class Flatten:
 		self.output_shape = (output_x, 1)
     
 	def getSaveData(self):
-		data = {'input_shape' : self.input_shape}
+		data = {
+			'name': 'Flatten',
+			'input_shape': self.input_shape
+		}
 		return data
 
 	def loadData(self, data):
