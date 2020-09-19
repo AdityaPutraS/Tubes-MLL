@@ -1,4 +1,5 @@
 import numpy as np
+from util import pooling2d
 
 class Pooling2D(object):
   def __init__(self, pool_shape, stride, padding = None, pool_mode = 'max'):
@@ -6,36 +7,49 @@ class Pooling2D(object):
     self.stride = stride
     self.padding = padding
     self.pool_mode = pool_mode
+    self.activation = lambda x: x
+    self.activation_deriv = lambda x: 1
+    self.output_shape = None
 
-  def pooling2d(self, x_data):
-    if self.padding != None:
-      x = np.pad(x_data, self.padding, mode='constant')
-    else:
-      x = x_data
+  def updateInputShape(self, input_shape):
+    self.input_shape = input_shape
+    self.updateWBO()
 
-    output_shape = (((x.shape[0] - self.pool_shape[0]) // self.stride) + 1,
-                    ((x.shape[1] - self.pool_shape[1]) // self.stride) + 1)
-    
-    pool_output = np.lib.stride_tricks.as_strided(
-        x,
-        shape = output_shape + self.pool_shape,
-        strides = (self.stride * x.strides[0], self.stride * x.strides[1]) + x.strides
-    )
+  def updateWBO(self):
+    # WBO = weight, bias, output
+    pass
 
-    pool_output = pool_output.reshape(-1, *self.pool_shape)
+  def getSaveData(self):
+		data = {
+      'input_shape' : self.input_shape,
+      'pool_shape': self.pool_shape,
+      'stride': self.stride,
+      'padding': self.padding,
+      'pool_mode': self.pool_mode
+    }
+		return data
 
-    if self.pool_mode == 'max':
-      return pool_output.max(axis=(1,2)).reshape(output_shape)
-    elif self.pool_mode == 'avg':
-      return pool_output.mean(axis=(1,2)).reshape(output_shape)
+  def loadData(self, data):
+    pass # TBD
+
+  def calcPrevDelta(self, neuron_input, delta, debug=False):
+		return delta
 
   def forward(self, feature_maps):
     result = []
     for fmap in feature_maps:
-      result.append(self.pooling2d(fmap))
+      result.append(pooling2d(fmap, self.pool_shape, self.stride, self.padding, self.pool_mode))
 
-    return np.array(result)
-    
+    result = np.array(result)
+    self.output_shape = result.shape
+    return result
+
+  def backprop(self, neuron_input, delta, lr=0.001, debug=False):
+		pass
+
+  def updateWeight(self, deltaWeight, debug=False):
+		pass
+
 if __name__ == "__main__":
   test_fmap = np.array(
       [[1,2,3,4],

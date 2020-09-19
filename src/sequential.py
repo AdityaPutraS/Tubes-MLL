@@ -48,7 +48,7 @@ class Sequential:
           self.add(Dense(layer['unit'], input_shape=layer['input_shape'], activation=layer['activation']))
           self.layers[-1].loadData(layer['data'])
         elif(layer['name'] == 'Flatten'):
-          self.add(Flatten()
+          self.add(Flatten())
           self.layers[-1].loadData(layer['data'])
         else:
           raise TypeError("Unknown layer")

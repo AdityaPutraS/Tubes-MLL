@@ -14,6 +14,10 @@ class Dense:
         if(activation == None or activation == 'sigmoid'):
             self.activation = sigmoid
             self.activation_deriv = sigmoid_deriv
+        elif(activation == 'relu'):
+            self.activation = relu
+            self.activation_deriv = relu_deriv
+
         self.updateWBO()
 
     def updateInputShape(self, input_shape):

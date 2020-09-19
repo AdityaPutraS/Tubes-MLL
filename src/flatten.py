@@ -5,7 +5,8 @@ class Flatten:
 	def __init__(self):
 		self.input_shape = []
 		self.output_shape = []
-		self.activation_deriv = sigmoid_deriv
+		self.activation = lambda x: x
+		self.activation_deriv = lambda x: 1
 
 	def updateInputShape(self, input_shape):
 		self.input_shape = input_shape
