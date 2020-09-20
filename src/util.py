@@ -1,4 +1,7 @@
 import numpy as np
+import cv2
+import os
+
 # Utility
 
 # mat = W * H * C
@@ -59,3 +62,14 @@ def pooling2d(x_data, pool_shape, stride, padding, pool_mode = 'max'):
       pooling_output.append(one_channel_pooling(data_channel, pool_shape, stride, padding, pool_mode))
 
     return np.moveaxis(np.array(pooling_output), 0, 2) # change channels first to channels last format
+
+def readImage(path):
+  result = []
+  images = os.listdir(path)
+  print(images)
+  for image in images:
+    result.append(cv2.imread(path + '/' + image,1))
+  return result
+
+# os.listdir()
+print(readImage('../resource/cats'))
