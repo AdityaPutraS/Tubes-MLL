@@ -8,6 +8,7 @@ class Conv2D:
       raise ValueError("Kernel shape must be in 2 Dimension")
     self.num_filter = num_filter
     self.kernel = np.random.random((num_filter, input_shape[2], kernel_shape[0], kernel_shape[1]))
+    self.bias = np.zeros((num_filter,))
     self.pad = pad
     self.stride = stride
     self.input_shape = input_shape
@@ -50,7 +51,7 @@ class Conv2D:
     for feature_map in x:
       result.append(conv2d(feature_map, self.kernel, self.pad, self.stride))
 
-    return np.array(result)
+    return np.array(result)+self.bias
 
   def calcPrevDelta(self, neuron_input, delta, debug=False):
     return delta
