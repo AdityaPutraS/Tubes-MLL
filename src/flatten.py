@@ -30,7 +30,7 @@ class Flatten:
 			assert self.input_shape == input_shape
 
 	def forward(self, mat):
-		assert self.input_shape == np.shape(mat.shape[1:])
+		assert self.input_shape == np.shape(mat[1:])
 		flattened_matrix = np.ndarray.flatten(mat)
 		return (flattened_matrix, flattened_matrix)
 

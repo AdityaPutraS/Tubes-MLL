@@ -70,6 +70,3 @@ def readImage(path):
   for image in images:
     result.append(cv2.imread(path + '/' + image,1))
   return result
-
-# os.listdir()
-print(readImage('../resource/cats'))
