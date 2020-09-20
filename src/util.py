@@ -27,10 +27,7 @@ def conv2d(mat, kernel, pad, stride):
 # Pooling function for 2d matrices
 def one_channel_pooling(x_data, pool_shape, stride, padding, pool_mode = 'max'):
   # do this for each channel
-  if padding != None:
-    x = np.pad(x_data, padding, mode='constant')
-  else:
-    x = x_data
+  x = np.pad(x_data, padding, mode='constant')
 
   output_shape = (((x.shape[0] - pool_shape[0]) // stride) + 1,
                   ((x.shape[1] - pool_shape[1]) // stride) + 1)
@@ -71,5 +68,6 @@ def readImage(path):
     result.append(cv2.imread(path + '/' + image,1))
   return result
 
-# os.listdir()
-print(readImage('../resource/cats'))
+if __name__ == "__main__":
+  # os.listdir()
+  print(readImage('../resource/cats'))
