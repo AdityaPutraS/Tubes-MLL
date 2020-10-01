@@ -37,10 +37,11 @@ class Flatten:
 		return np.array(flattened_matrix)
 
 	def calcPrevDelta(self, neuron_input, delta, debug=False):
-		return delta
+		return delta.reshape([-1] + list(self.input_shape))
 	
 	def backprop(self, neuron_input, delta, lr=0.001, debug=False):
-		pass
+		return np.zeros(0)
 
 	def updateWeight(self, deltaWeight, debug=False):
+		# Tidak memiliki weight
 		pass
