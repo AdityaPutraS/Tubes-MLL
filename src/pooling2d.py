@@ -104,7 +104,15 @@ class Pooling2D(object):
           for each_channel in range(delta.shape[3]):
             # store each range variable to a variable, passing it easier to backward delta function
             current_element = [each_batch, each_row, each_col, each_channel]
+            if (debug):
+              print("Current Element:\n    batch  :", each_batch)
+              print("    row    :", each_row)
+              print("    column :", each_col)
+              print("    channel:", each_channel)
             dx = self.backward_delta[self.pool_mode](neuron_input, delta, current_element, dx)
+            if (debug):
+              print("\n\nDX in this element batch after backward delta", dx)
+              print("=============================================")
 
     return dx
 
@@ -123,7 +131,7 @@ if __name__ == "__main__":
   print("feature_maps shape:", feature_maps.shape)
   print("feature_maps:\n", feature_maps)
 
-  pool = Pooling2D((2, 2), 2, pool_mode='avg')
+  pool = Pooling2D((2, 2), 2)
   result = pool.forward(feature_maps)
   print("\n\nresult shape:", result.shape)
   print("result:\n", result)
