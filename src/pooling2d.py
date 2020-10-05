@@ -12,6 +12,11 @@ class Pooling2D(object):
     self.input_shape = None
     self.output_shape = None
 
+    self.backward_delta = {
+      'max': self.maximum_backward_delta,
+      'avg': self.average_backward_delta
+    }
+
     self.updateWBO()
 
   def updateInputShape(self, input_shape):
@@ -39,9 +44,6 @@ class Pooling2D(object):
   def loadData(self, data):
     pass # TBD
 
-  def calcPrevDelta(self, neuron_input, delta, debug=False):
-    return delta
-
   def forward(self, feature_maps):
     # assert self.input_shape == feature_maps.shape[1:]
     result = []
@@ -52,82 +54,84 @@ class Pooling2D(object):
     self.output_shape = result.shape
     return result
 
-  def backprop(self, neuron_input, delta, lr=0.001, debug=False):
+  def average_backward_delta(self, neuron_input, delta, current_element, dx):
+    each_batch, each_row, each_col, each_channel = current_element
+    
+    temp_pool = neuron_input[
+      each_batch,
+      (each_row * self.stride):(each_row * self.stride + self.pool_shape[0]),
+      (each_col * self.stride):(each_col * self.stride + self.pool_shape[1]),
+      each_channel
+    ]
+
+    # average = delta divided by input shape (width and height)
+    average_delta = delta[each_batch, each_row, each_col, each_channel] / temp_pool.shape[0] / temp_pool.shape[1]
+
+    dx[
+      each_batch,
+      (each_row * self.stride):(each_row * self.stride + self.pool_shape[0]),
+      (each_col * self.stride):(each_col * self.stride + self.pool_shape[1]),
+      each_channel
+    ] += np.ones((temp_pool.shape[0], temp_pool.shape[1])) * average_delta
+    return dx
+
+  def maximum_backward_delta(self, neuron_input, delta, current_element, dx):
+    each_batch, each_row, each_col, each_channel = current_element
+
+    temp_pool = neuron_input[
+      each_batch,
+      (each_row * self.stride):(each_row * self.stride + self.pool_shape[0]),
+      (each_col * self.stride):(each_col * self.stride + self.pool_shape[1]),
+      each_channel
+    ]
+    # Mask True if element in pool is the max of the pool, else False
+    masking = (temp_pool == np.max(temp_pool))
+    dx[
+      each_batch,
+      (each_row * self.stride):(each_row * self.stride + self.pool_shape[0]),
+      (each_col * self.stride):(each_col * self.stride + self.pool_shape[1]),
+      each_channel
+    ] += masking * delta[each_batch, each_row, each_col, each_channel]
+
+    return dx
+
+  def calcPrevDelta(self, neuron_input, delta, debug=False):
+    dx = np.zeros(neuron_input.shape)
+
+    for each_batch in range(delta.shape[0]):
+      for each_row in range(delta.shape[1]):
+        for each_col in range(delta.shape[2]):
+          for each_channel in range(delta.shape[3]):
+            # store each range variable to a variable, passing it easier to backward delta function
+            current_element = [each_batch, each_row, each_col, each_channel]
+            dx = self.backward_delta[self.pool_mode](neuron_input, delta, current_element, dx)
+
+    return dx
+
+  def backprop(self, neuron_input, delta, debug=False):
+    # no weight to update, only pass the error to previous layer
     pass
 
   def updateWeight(self, deltaWeight, debug=False):
+    # no weight to update, only pass the error to previous layer
     pass
 
 if __name__ == "__main__":
-  test_fmap = np.array(
-      [[1,2,3,4],
-       [5,6,7,8],
-       [9,10,11,12],
-       [13,14,15,16]]
-  )
+  np.random.seed(1)
 
-  test_fmaps = np.array([test_fmap, test_fmap*2])
-  print("test 2D feature maps shape:", test_fmaps.shape)
-  pooling_layer = Pooling2D(pool_shape=(2,2), stride=2, pool_mode='max')
-  result = pooling_layer.forward(test_fmaps)
-  print(result)
-  print("result shape:", result.shape)
+  feature_maps = np.random.randint(1, 3, (2, 2, 2, 3))
+  print("feature_maps shape:", feature_maps.shape)
+  print("feature_maps:\n", feature_maps)
 
-  """[[[ 6  8]
-       [14 16]]
+  pool = Pooling2D((2, 2), 2, pool_mode='avg')
+  result = pool.forward(feature_maps)
+  print("\n\nresult shape:", result.shape)
+  print("result:\n", result)
 
-      [[12 16]
-       [28 32]]]
-     result shape: (2, 2, 2)"""
+  delta = np.random.random(result.shape)
+  print("\n\ndelta shape:", delta.shape)
+  print("delta:\n", delta)
 
-  test_3d_fmaps = np.array([
-    [
-      [
-        [19, 66, 10],
-        [80, 99, 10],
-        [155, 148, 255]
-      ], [
-        [198, 254, 12],
-        [88, 10, 12],
-        [90, 19, 255]
-      ], [
-        [8, 1, 13],
-        [113, 3, 13],
-        [19, 1, 255]
-      ]
-    ], [
-      [
-        [1, 10, 14],
-        [32, 31, 14],
-        [10, 0, 123]
-      ], [
-        [9, 9, 15],
-        [10, 15, 50],
-        [99, 112, 0]
-      ], [
-        [10, 1, 12],
-        [11, 11, 12],
-        [19, 100, 111]
-      ]
-    ]
-  ])
-
-  print("\ntest 3D feature maps shape:", test_3d_fmaps.shape)
-  pooling_3d_layer = Pooling2D(pool_shape=(2,2), stride=1, pool_mode='avg')
-  result = pooling_3d_layer.forward(test_3d_fmaps)
-  print(result)
-  print("result shape:", result.shape)
-
-  """[[[[ 96.25 107.25  11.  ]
-        [103.25  69.   133.  ]]
-
-        [[101.75  67.    12.5 ]
-        [ 77.5    8.25 133.75]]]
-
-
-      [[[ 13.    16.25  23.25]
-        [ 37.75  39.5   46.75]]
-
-        [[ 10.     9.    22.25]
-        [ 34.75  59.5   43.25]]]]
-      result shape: (2, 2, 2, 3)"""
+  dx = pool.calcPrevDelta(feature_maps, delta)
+  print("\n\ndx shape:", dx.shape)
+  print("dx:\n", dx)
