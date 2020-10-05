@@ -3,6 +3,10 @@ from util import pooling2d
 
 class Pooling2D(object):
   def __init__(self, pool_shape, stride, padding = 0, pool_mode = 'max'):
+    # FEATURE MAP INPUT SHAPE:
+    #   0: width
+    #   1: height
+    #   2: channel
     self.pool_shape = pool_shape
     self.stride = stride
     self.padding = padding
@@ -118,7 +122,7 @@ class Pooling2D(object):
 
   def backprop(self, neuron_input, delta, debug=False):
     # no weight to update, only pass the error to previous layer
-    pass
+    return 0
 
   def updateWeight(self, deltaWeight, debug=False):
     # no weight to update, only pass the error to previous layer
