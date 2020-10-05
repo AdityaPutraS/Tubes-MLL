@@ -24,26 +24,31 @@ def conv2d(mat, kernel, pad, stride):
           output[i, j, _filter] += np.tensordot(padded_mat[start_x:end_x, start_y:end_y, chan], kernel[_filter, min(chan, kernel_c-1), :, :]) 
   return output
 
+def get_pooling_region(x, pool_shape, stride, output_shape):
+  for i in range(output_shape[0]):
+    for j in range(output_shape[1]):
+      new_region = x[(i * stride):(i * stride + pool_shape[0]), (j * stride):(j * stride + pool_shape[1])]
+      yield new_region, i, j
+
 # Pooling function for 2d matrices
 def one_channel_pooling(x_data, pool_shape, stride, padding, pool_mode = 'max'):
   # do this for each channel
-  x = np.pad(x_data, padding, mode='constant')
+  x = np.pad(x_data, padding , mode='constant')
 
   output_shape = (((x.shape[0] - pool_shape[0]) // stride) + 1,
                   ((x.shape[1] - pool_shape[1]) // stride) + 1)
 
-  pool_output = np.lib.stride_tricks.as_strided(
-      x,
-      shape = output_shape + pool_shape,
-      strides = (stride * x.strides[0], stride * x.strides[1]) + x.strides
-  )
+  pool_output = np.zeros(output_shape)
 
-  pool_output = pool_output.reshape(-1, *pool_shape)
+  pooling_output_mode = {
+    'max': np.amax,
+    'avg': np.mean
+  }
 
-  if pool_mode == 'max':
-    return pool_output.max(axis=(1,2)).reshape(output_shape)
-  elif pool_mode == 'avg':
-    return pool_output.mean(axis=(1,2)).reshape(output_shape)
+  for region, row, col in get_pooling_region(x, pool_shape, stride, output_shape):
+    pool_output[row, col] = pooling_output_mode[pool_mode](region, axis=(0, 1))
+
+  return pool_output
 
 def pooling2d(x_data, pool_shape, stride, padding, pool_mode = 'max'):
   # pooling can be done on however many channel there is
