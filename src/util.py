@@ -110,11 +110,16 @@ def pooling2d(x_data, pool_shape, stride, padding, pool_mode = 'max'):
     # data consist of n channels
     data = np.moveaxis(x_data, 2, 0) # change channels last to channels first formats
 
-    pooling_output = []
-    for data_channel in data:
-      pooling_output.append(one_channel_pooling(data_channel, pool_shape, stride, padding, pool_mode))
+    pooling_output = np.zeros((
+      data.shape[0], # channel
+      ((data.shape[1] + padding - pool_shape[0]) // stride) + 1, # width
+      ((data.shape[2] + padding - pool_shape[1]) // stride) + 1 # height
+    ))
 
-    return np.moveaxis(np.array(pooling_output), 0, 2) # change channels first to channels last format
+    for idx, data_channel in enumerate(data):
+      pooling_output[idx] = one_channel_pooling(data_channel, pool_shape, stride, padding, pool_mode)
+
+    return np.moveaxis(pooling_output, 0, 2) # change channels first to channels last format
 
 def readImage(path, image_size):
     result = []

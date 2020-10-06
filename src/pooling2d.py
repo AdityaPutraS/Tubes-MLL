@@ -49,12 +49,16 @@ class Pooling2D(object):
     pass # TBD
 
   def forward(self, feature_maps):
-    # assert self.input_shape == feature_maps.shape[1:]
-    result = []
-    for fmap in feature_maps:
-      result.append(pooling2d(fmap, self.pool_shape, self.stride, self.padding, self.pool_mode))
+    assert self.input_shape == feature_maps.shape[1:]
+    result = np.zeros((
+        feature_maps.shape[0], # num_of_feature_maps
+        ((feature_maps.shape[1] + self.padding - self.pool_shape[0]) // self.stride) + 1, # width
+        ((feature_maps.shape[2] + self.padding - self.pool_shape[1]) // self.stride) + 1, # height
+        feature_maps.shape[3] # channel
+      ))
+    for idx, fmap in enumerate(feature_maps):
+      result[idx] = pooling2d(fmap, self.pool_shape, self.stride, self.padding, self.pool_mode)
 
-    result = np.array(result)
     self.output_shape = result.shape
     return result
 
@@ -131,11 +135,12 @@ class Pooling2D(object):
 if __name__ == "__main__":
   np.random.seed(1)
 
-  feature_maps = np.random.randint(1, 3, (2, 2, 2, 3))
+  feature_maps = np.random.randint(0, 255, (2, 4, 4, 3))
   print("feature_maps shape:", feature_maps.shape)
   print("feature_maps:\n", feature_maps)
 
   pool = Pooling2D((2, 2), 2)
+  pool.input_shape = feature_maps.shape[1:]
   result = pool.forward(feature_maps)
   print("\n\nresult shape:", result.shape)
   print("result:\n", result)
