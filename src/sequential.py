@@ -57,16 +57,18 @@ class Sequential:
     # Menghitung delta output layer
     lastLayer = self.layers[-1]
     lastX = rawInput[-1]
-    delta = lastLayer.activation_deriv(lastX) * (yTarget - yPred)
-    delta = delta.ravel()
-    listDelta = [delta]
+    # print(lastLayer.activation_deriv(lastX).shape, yTarget.shape, yPred.shape)
+    delta = lastLayer.activation_deriv(lastX) * (yTarget.reshape(-1, 1) - yPred)
+    # delta = delta.ravel()
+    listDelta = []
     # print('Hitung delta untuk setiap layer')
     # Hitung delta setiap layer menggunakan layer setelahnya, mulai dari layer terakhir
     for i in range(len(self.layers)-1, -1, -1):
       # print('Calculating delta layer', self.layers[i])
-      prev_delta = self.layers[i].calcPrevDelta(rawInput[i], delta, debug=debug)
       listDelta.append(delta)
-      delta = prev_delta
+      # print('rawInput:', rawInput[i].shape)
+      # print('delta:', delta.shape)
+      delta = self.layers[i].calcPrevDelta(rawInput[i], delta, debug=debug)
 
     return listDelta
 
@@ -108,16 +110,23 @@ class Sequential:
       deltaWeight.append(self._fit_1_batch(x, y, lr=lr, debug=debug))
       # End for mini batch
 
-    # Ide : Hitung jumlah delta weight tiap layer, terus update weight tiap layer dengan rata rata deltaWeight layer itu
     # Hitung total
-    totalDeltaWeight = deltaWeight[0]
-    for i in range(len(self.layers)):
-      for j in range(1, len(deltaWeight)):
-        totalDeltaWeight[i] += deltaWeight[j][i]
+    totalDeltaWeight = [] # List of delta weight tiap layer
+    totalDeltaBias = [] # List of delta bias tiap layer
+    for idx_layer in range(len(self.layers)):
+      dw, db = deltaWeight[0][-1-idx_layer]
+      for idx_batch in range(1, numBatch):
+        dw += deltaWeight[idx_batch][-1-idx_layer][0]
+        db += deltaWeight[idx_batch][-1-idx_layer][1]
+      print(self.layers[idx_layer], dw, db)
+      # dw /= numBatch
+      # db /= numBatch
+      totalDeltaWeight.append(dw)
+      totalDeltaBias.append(db)
 
     # Update weight
     for idx, layer in enumerate(self.layers):
-      layer.updateWeight(totalDeltaWeight[-idx-1] / (end-start))
+      layer.updateWeight(totalDeltaWeight[idx], totalDeltaBias[idx])
 
   # Fit 1 batch
   def _fit_1_batch(self, xData, yData, lr=0.001, debug=False):
@@ -137,11 +146,14 @@ class Sequential:
     # Lakukan backpropagation untuk setiap layer, mulai dari layer terakhir
     # print('Backprop untuk setiap layer')
     deltaWeight = []
-    for i in range(len(self.layers)-1, 0, -1):
+    for i in range(len(self.layers)-1, -1, -1):
       l = self.layers[i]
-      # print('Calculate backprop layer', l)
-      deltaWeight.append(l.backprop(rawInput[i], listDelta[-1-i], lr, debug=debug))
-    # print('Calculate backprop layer', self.layers[0])
-    deltaWeight.append(self.layers[0].backprop(rawInput[0], listDelta[-1], lr, debug=debug))
+      dw, db = l.backprop(rawInput[i], listDelta[-1-i], lr, debug=debug)
+      deltaWeight.append((
+          np.expand_dims(np.sum(dw, axis=0), 0),
+          np.expand_dims(np.sum(db, axis=0), 0)
+      ))
 
+    # Urutan deltaWeight = deltaWeight last layer, deltaWeight last layer - 1, ... deltaWeight first layer
+    # print('Didalam fit_1_batch', deltaWeight)
     return deltaWeight

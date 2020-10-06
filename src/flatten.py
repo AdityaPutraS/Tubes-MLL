@@ -45,7 +45,7 @@ class Flatten:
 		return temp
 	
 	def backprop(self, neuron_input, delta, lr=0.001, debug=False):
-		return 0
+		return np.zeros(()), np.zeros(())
 
-	def updateWeight(self, deltaWeight, debug=False):
+	def updateWeight(self, deltaWeight, deltaBias, debug=False):
 		pass

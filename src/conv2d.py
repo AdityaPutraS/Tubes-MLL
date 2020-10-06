@@ -19,6 +19,9 @@ class Conv2D:
     if (activation == 'relu'):
       self.activation = relu # detector part
       self.activation_deriv = relu_deriv
+    elif (activation == 'sigmoid'):
+      self.activation = sigmoid
+      self.activation_deriv = sigmoid_deriv
     else:
       raise ValueError("Activation function " + activation + " does not exist.")
 
@@ -37,7 +40,7 @@ class Conv2D:
                          ((self.pad[2][0] + self.pad[2][1] + self.input_shape[1] - self.kernel.shape[2]) // self.stride) + 1,
                          self.num_filter)
     
-    self.kernel = self.kernel * np.sqrt(6/(np.sum(self.kernel.shape) + np.sum(self.output_shape)))
+    self.kernel = self.kernel * np.sqrt(2/(np.sum(self.kernel.shape) + np.sum(self.output_shape)))
 
   def getSaveData(self):
     data = {
@@ -148,7 +151,8 @@ class Conv2D:
     if (debug):
       print('Conv2D backprop shape:', res.shape)
       print('==================================================')
-    return res
+    return res, np.zeros(())
 
-  def updateWeight(self, deltaWeight, debug=False):
+  def updateWeight(self, deltaWeight, deltaBias, debug=False):
     self.kernel += deltaWeight
+    # self.bias += deltaBias

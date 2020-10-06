@@ -49,12 +49,16 @@ class Pooling2D(object):
     pass # TBD
 
   def forward(self, feature_maps):
-    # assert self.input_shape == feature_maps.shape[1:]
-    result = []
-    for fmap in feature_maps:
-      result.append(pooling2d(fmap, self.pool_shape, self.stride, self.padding, self.pool_mode))
+    assert self.input_shape == feature_maps.shape[1:]
+    result = np.zeros((
+        feature_maps.shape[0], # num_of_feature_maps
+        ((feature_maps.shape[1] + self.padding - self.pool_shape[0]) // self.stride) + 1, # width
+        ((feature_maps.shape[2] + self.padding - self.pool_shape[1]) // self.stride) + 1, # height
+        feature_maps.shape[3] # channel
+      ))
+    for idx, fmap in enumerate(feature_maps):
+      result[idx] = pooling2d(fmap, self.pool_shape, self.stride, self.padding, self.pool_mode)
 
-    result = np.array(result)
     self.output_shape = result.shape
     return result
 
@@ -122,9 +126,9 @@ class Pooling2D(object):
 
   def backprop(self, neuron_input, delta, lr=0.001, debug=False):
     # no weight to update, only pass the error to previous layer
-    return 0
+    return np.zeros(()), np.zeros(())
 
-  def updateWeight(self, deltaWeight, debug=False):
+  def updateWeight(self, deltaWeight, deltaBias, debug=False):
     # no weight to update, only pass the error to previous layer
     pass
 

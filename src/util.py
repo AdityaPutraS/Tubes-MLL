@@ -23,6 +23,7 @@ def conv2d(mat, kernel, pad, stride):
         end_y = start_y + kernel_y 
         for chan in range(padded_mat_c):
           output[i, j, _filter] += np.tensordot(padded_mat[start_x:end_x, start_y:end_y, chan], kernel[_filter, :, :, min(chan, kernel_c-1)]) 
+        output[b, i, j, _filter] /= padded_mat_c
   return output
 
 # mat = batch * W * H * C
@@ -51,6 +52,7 @@ def conv2d_batch(mat, kernel, pad, stride):
           for chan in range(padded_mat_c):
             # print(b, i, j, _filter)
             output[b, i, j, _filter] += np.tensordot(padded_mat[b, start_x:end_x, start_y:end_y, chan], kernel[_filter, :, :, min(chan, kernel_c-1)]) 
+          output[b, i, j, _filter] /= padded_mat_c
   return output
 
 # mat = batch * W * H * C
@@ -60,7 +62,10 @@ def conv2d_batch_kernel(mat, kernel, pad, stride):
   padded_mat = np.pad(mat, pad)
   padded_mat_batch, padded_mat_x, padded_mat_y, padded_mat_c = padded_mat.shape
   kernel_batch,num_filter, kernel_x, kernel_y, kernel_c = kernel.shape
-  assert padded_mat_batch == kernel_batch
+  if(padded_mat_batch != kernel_batch):
+    print('Padded mat shape:', padded_mat.shape)
+    print('kernel shape:', kernel.shape)
+    raise ValueError("padded_mat_batch " + str(padded_mat_batch) + " does not match with kernel_batch " + str(kernel_batch))
   output_shape = (padded_mat_batch, (padded_mat_x - kernel_x) // stride + 1, (padded_mat_y - kernel_y) // stride + 1, num_filter)
   output = np.zeros(output_shape)
   for b in range(padded_mat_batch):
@@ -73,6 +78,7 @@ def conv2d_batch_kernel(mat, kernel, pad, stride):
           end_y = start_y + kernel_y 
           for chan in range(padded_mat_c):
             output[b, i, j, _filter] += np.tensordot(padded_mat[b, start_x:end_x, start_y:end_y, chan], kernel[b, _filter, :, :, min(chan, kernel_c-1)]) 
+          output[b, i, j, _filter] /= padded_mat_c
   return output
 
 def get_pooling_region(x, pool_shape, stride, output_shape):
@@ -110,11 +116,16 @@ def pooling2d(x_data, pool_shape, stride, padding, pool_mode = 'max'):
     # data consist of n channels
     data = np.moveaxis(x_data, 2, 0) # change channels last to channels first formats
 
-    pooling_output = []
-    for data_channel in data:
-      pooling_output.append(one_channel_pooling(data_channel, pool_shape, stride, padding, pool_mode))
+    pooling_output = np.zeros((
+      data.shape[0], # channel
+      ((data.shape[1] + padding - pool_shape[0]) // stride) + 1, # width
+      ((data.shape[2] + padding - pool_shape[1]) // stride) + 1 # height
+    ))
 
-    return np.moveaxis(np.array(pooling_output), 0, 2) # change channels first to channels last format
+    for idx, data_channel in enumerate(data):
+      pooling_output[idx] = one_channel_pooling(data_channel, pool_shape, stride, padding, pool_mode)
+
+    return np.moveaxis(pooling_output, 0, 2) # change channels first to channels last format
 
 def readImage(path, image_size):
     result = []
