@@ -120,7 +120,7 @@ class Pooling2D(object):
 
     return dx
 
-  def backprop(self, neuron_input, delta, debug=False):
+  def backprop(self, neuron_input, delta, lr=0.001, debug=False):
     # no weight to update, only pass the error to previous layer
     return 0
 

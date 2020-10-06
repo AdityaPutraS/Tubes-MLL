@@ -11,7 +11,7 @@ class Conv2D:
     self.kernel_shape = kernel_shape
     self.kernel = None
     self.bias = np.zeros((num_filter,))
-    self.pad = ((pad, pad), (pad, pad), (0, 0))
+    self.pad = ((0, 0), (pad, pad), (pad, pad), (0, 0))
     self.stride = stride
     self.input_shape = input_shape
     self.output_shape = None
@@ -33,8 +33,8 @@ class Conv2D:
     # Kernel = Num Filter * W * H * C_Input
     self.kernel = np.random.random((self.num_filter, self.kernel_shape[0], self.kernel_shape[1], self.input_shape[2]))
 
-    self.output_shape = (((self.pad[0][0] + self.pad[0][1] + self.input_shape[0] - self.kernel.shape[1]) // self.stride) + 1,
-                         ((self.pad[1][0] + self.pad[1][1] + self.input_shape[1] - self.kernel.shape[2]) // self.stride) + 1,
+    self.output_shape = (((self.pad[1][0] + self.pad[1][1] + self.input_shape[0] - self.kernel.shape[1]) // self.stride) + 1,
+                         ((self.pad[2][0] + self.pad[2][1] + self.input_shape[1] - self.kernel.shape[2]) // self.stride) + 1,
                          self.num_filter)
     
     self.kernel = self.kernel * np.sqrt(6/(np.sum(self.kernel.shape) + np.sum(self.output_shape)))
@@ -54,12 +54,13 @@ class Conv2D:
 
   def forward(self, x):
     assert self.input_shape == x.shape[1:]
-    result = []
+    # result = []
 
-    for feature_map in x:
-      result.append(conv2d(feature_map, self.kernel, self.pad, self.stride))
+    # for feature_map in x:
+    #   result.append(conv2d(feature_map, self.kernel, self.pad, self.stride))
 
-    return np.array(result)+self.bias
+    # return np.array(result)+self.bias
+    return conv2d_batch(x, self.kernel, self.pad, self.stride)
 
   def calcPrevDelta(self, neuron_input, delta, debug=False):
     # Axis 0 = num filter, 1 = w, 2 = h, 3 = channel
@@ -67,7 +68,7 @@ class Conv2D:
     prevDelta = []
     activatedDerivInput = self.activation_deriv(neuron_input) # f'(z)
 
-    deltaW, deltaH, deltaC = delta.shape
+    deltaBatch, deltaW, deltaH, deltaC = delta.shape
     inpBatch, inpW, inpH, inpC = activatedDerivInput.shape
     rotKernelNum, rotKernelW, rotKernelH, rotKernelC = rotatedKernel.shape
     
@@ -77,15 +78,16 @@ class Conv2D:
     if(padW < 0):
       padW = -1 * padW
       left, right = int(np.ceil(padW)), int(np.floor(padW))
-      delta = delta[left:-right]
+      delta = delta[:,left:-right]
       padW = 0
     if(padH < 0):
       padH = -1 * padH
       up, down = int(np.ceil(padH)), int(np.floor(padH))
-      delta = delta[:, up:-down]
+      delta = delta[:, :, up:-down]
       padH = 0
     
     pad = (
+        (0, 0),
         (int(np.ceil(padW)), int(np.floor(padW))),
         (int(np.ceil(padH)), int(np.floor(padH))),
         (0, 0),
@@ -96,15 +98,17 @@ class Conv2D:
       print('delta shape:', delta.shape)
       print('pad:', pad)
 
-    tmp = conv2d(delta, rotatedKernel, pad, 1) # full konvolusi antara rot(kernel) dan delta next layer
-    tmp = np.repeat(np.expand_dims(np.sum(tmp, axis=2), axis=2), activatedDerivInput.shape[3], axis=2) / tmp.shape[2]
+    tmp = conv2d_batch(delta, rotatedKernel, pad, 1) # full konvolusi antara rot(kernel) dan delta next layer
+    # tmp = batch, w, h, c
+    tmp = np.repeat(np.expand_dims(np.sum(tmp, axis=3), axis=3), inpC, axis=3) / tmp.shape[3]
     if(debug):
       print('tmp shape:', tmp.shape) # w, h, c
       print('activatedDerivInput shape:', activatedDerivInput.shape) # batch, w, h, c
     
-    for inp in activatedDerivInput:
-      prevDelta.append(tmp * inp)
-    prevDelta = np.sum(np.array(prevDelta), axis=0) / activatedDerivInput.shape[0]
+    # for idx, inp in enumerate(activatedDerivInput):
+    #   prevDelta.append(tmp[idx] * inp)
+    # prevDelta = np.sum(np.array(prevDelta), axis=0) / activatedDerivInput.shape[0]
+    prevDelta = tmp * activatedDerivInput
     if (debug):
       print('prevDelta shape:', prevDelta.shape)
       print('Conv2D delta shape:', prevDelta.shape)
@@ -112,26 +116,35 @@ class Conv2D:
       print('==================================================')
     return prevDelta
 
+  # delta = batch, W, H, C
+  # neuron input = batch, W, H, C
   def backprop(self, neuron_input, delta, lr=0.001, debug=False):
-    res = np.zeros((1, delta.shape[2], *self.kernel.shape[1:]))
-    for idx, inp in enumerate(neuron_input):
-      if(debug):
-        print('delta shape:', delta.shape) # W, H, C
-        print('inp shape:', inp.shape)
-      tempDelta = np.zeros((1, *self.kernel.shape[1:]))
-      # Looping untuk semua filter
-      for d in delta.swapaxes(2,0).swapaxes(1,2):
-        expandedD = np.expand_dims(d, (0, 3)) # 1, W, H, 1
-        stride = max(int(np.floor((inp.shape[0] - expandedD.shape[1] + self.pad[0][0] + self.pad[0][1])/(self.kernel.shape[2] - 1.0))), 1)
-        if(debug):
-          print('expandedD shape:', expandedD.shape)
-          print('stride:', stride)
-        tmp = np.repeat(conv2d(inp, expandedD, self.pad, stride), self.kernel.shape[3], axis=2) # Repeat di axis channel sebanyak channel kernel
-        tempDelta = np.vstack((tempDelta, np.expand_dims(tmp, 0))) # tempDelta = num_filter, W, H, C_Kernel
-      if(debug):
-        print('tempDelta shape:', tempDelta.shape)
-      res = np.vstack((res, np.expand_dims(tempDelta[1:], 0))) # Buang elemen pertama karena isinya 0
-    res = lr * np.sum(res, axis=0) / neuron_input.shape[0]
+    res = np.zeros((1, delta.shape[3], *self.kernel.shape[1:]))
+    inpBatch, inpW, inpH, inpC = neuron_input.shape
+    deltaBatch, deltaW, deltaH, deltaC = delta.shape
+    delta2 = np.expand_dims(delta, 4).swapaxes(3, 1).swapaxes(3, 2)
+
+    if(debug):
+      print('delta shape:', delta.shape) # W, H, C
+      print('neuron_input shape:', neuron_input.shape)
+      # tempDelta = np.zeros((inpBatch, *self.kernel.shape[1:]))
+      # # Looping untuk semua filter
+      # for d in deltaBatch.swapaxes(2,0).swapaxes(1,2):
+      #   expandedD = np.expand_dims(d, (0, 3)) # 1, W, H, 1
+      #   stride = max(int(np.floor((inpW - expandedD.shape[1] + self.pad[0][0] + self.pad[0][1])/(self.kernel.shape[2] - 1.0))), 1)
+      #   if(debug):
+      #     print('expandedD shape:', expandedD.shape)
+      #     print('stride:', stride)
+      #   tmp = np.repeat(conv2d(inp, expandedD, self.pad, stride), self.kernel.shape[3], axis=2) # Repeat di axis channel sebanyak channel kernel
+      #   tempDelta = np.vstack((tempDelta, np.expand_dims(tmp, 0))) # tempDelta = num_filter, W, H, C_Kernel
+      # if(debug):
+      #   print('tempDelta shape:', tempDelta.shape)
+      # res = np.vstack((res, np.expand_dims(tempDelta[1:], 0))) # Buang elemen pertama karena isinya 0
+
+    stride = max(int(np.floor((inpW - deltaW + self.pad[1][0] + self.pad[1][1])/(self.kernel.shape[2] - 1.0))), 1)
+    tmp = conv2d_batch_kernel(self.activation(neuron_input), delta2, self.pad, stride)
+    res = np.repeat(np.expand_dims(tmp, 4).swapaxes(3, 1).swapaxes(3, 2), inpC, axis=4)
+    res = lr * np.sum(res, axis=0)
     if (debug):
       print('Conv2D backprop shape:', res.shape)
       print('==================================================')

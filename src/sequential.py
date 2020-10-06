@@ -60,9 +60,10 @@ class Sequential:
     delta = lastLayer.activation_deriv(lastX) * (yTarget - yPred)
     delta = delta.ravel()
     listDelta = [delta]
-
+    # print('Hitung delta untuk setiap layer')
     # Hitung delta setiap layer menggunakan layer setelahnya, mulai dari layer terakhir
     for i in range(len(self.layers)-1, -1, -1):
+      # print('Calculating delta layer', self.layers[i])
       prev_delta = self.layers[i].calcPrevDelta(rawInput[i], delta, debug=debug)
       listDelta.append(delta)
       delta = prev_delta
@@ -134,10 +135,13 @@ class Sequential:
     listDelta = self.calcDelta(rawInput, temp, yData, debug=debug)
 
     # Lakukan backpropagation untuk setiap layer, mulai dari layer terakhir
+    # print('Backprop untuk setiap layer')
     deltaWeight = []
     for i in range(len(self.layers)-1, 0, -1):
       l = self.layers[i]
+      # print('Calculate backprop layer', l)
       deltaWeight.append(l.backprop(rawInput[i], listDelta[-1-i], lr, debug=debug))
+    # print('Calculate backprop layer', self.layers[0])
     deltaWeight.append(self.layers[0].backprop(rawInput[0], listDelta[-1], lr, debug=debug))
 
     return deltaWeight

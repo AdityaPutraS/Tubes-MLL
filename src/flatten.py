@@ -34,10 +34,10 @@ class Flatten:
 		flattened_matrix = []
 		for each_data in mat:
 			flattened_matrix.append(np.ndarray.flatten(each_data))
-		return np.array(flattened_matrix).reshape((-1,))
+		return np.array(flattened_matrix)
 
 	def calcPrevDelta(self, neuron_input, delta, debug=False):
-		temp = delta.reshape(list(self.input_shape)) # reshape 1 dimensi jadi (W, H, C)
+		temp = delta.reshape([-1] + list(self.input_shape)) # reshape 2 dimensi (batch, N) jadi (batch, W, H, C)
 		if (debug):
 			print('Temp flatten delta shape:', temp.shape)
 			# print('Temp flatten delta:', temp)

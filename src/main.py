@@ -42,16 +42,16 @@ if __name__ == "__main__":
     # ML Model
     model = Sequential()
 
-    model.add(Conv2D(1, (2, 2), pad=1, stride=10, input_shape=(data.shape[1], data.shape[2], data.shape[3]), activation='relu'))
-    model.add(Pooling2D((2, 2), stride=1))
+    model.add(Conv2D(4, (5, 5), pad=0, stride=5, input_shape=(data.shape[1], data.shape[2], data.shape[3]), activation='relu'))
+    model.add(Conv2D(4, (2, 2), pad=0, stride=1))
+    model.add(Pooling2D((4, 4), stride=4))
     model.add(Flatten())
+    model.add(Dense(8, activation='relu'))
     model.add(Dense(4, activation='relu'))
-    model.add(Dense(2, activation='relu'))
     model.add(Dense(1, activation='sigmoid'))
 
-    pred = model.forward(data)
-    print(pred)
-
-    # model.fit(x_train, y_train, epochs=10, lr=0.1, batch_size=5)
-    # pred = model.forward(x_test)
-    # print(classification_report(y_test, np.round(pred)))
+    print(model.calculateError(x_train, y_train))
+    model.fit(x_train, y_train, epochs=30, lr=0.001, batch_size=5)
+    
+    pred = model.forward(x_test)
+    print(classification_report(y_test, np.round(pred)))
