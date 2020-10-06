@@ -13,7 +13,7 @@ class Flatten:
 		output_x = 1
 		for length in input_shape:
 			output_x = output_x * length
-		self.output_shape = (output_x, 1)
+		self.output_shape = (output_x,)
     
 	def getSaveData(self):
 		data = {
@@ -34,14 +34,18 @@ class Flatten:
 		flattened_matrix = []
 		for each_data in mat:
 			flattened_matrix.append(np.ndarray.flatten(each_data))
-		return np.array(flattened_matrix)
+		return np.array(flattened_matrix).reshape((-1,))
 
 	def calcPrevDelta(self, neuron_input, delta, debug=False):
-		return delta.reshape([-1] + list(self.input_shape))
+		temp = delta.reshape(list(self.input_shape)) # reshape 1 dimensi jadi (W, H, C)
+		if (debug):
+			print('Temp flatten delta shape:', temp.shape)
+			# print('Temp flatten delta:', temp)
+			print('==================================================')
+		return temp
 	
 	def backprop(self, neuron_input, delta, lr=0.001, debug=False):
-		return np.zeros(0)
+		return 0
 
 	def updateWeight(self, deltaWeight, debug=False):
-		# Tidak memiliki weight
 		pass

@@ -14,6 +14,9 @@ from pooling2d import Pooling2D
 from flatten import Flatten
 from dense import Dense
 
+from sklearn.model_selection import train_test_split
+from sklearn.metrics import classification_report
+
 if __name__ == "__main__":
     np.random.seed(13517013)
     image_size = (100, 100)
@@ -29,10 +32,12 @@ if __name__ == "__main__":
     dogs = readImage("../data/dogs")
 
     data = np.concatenate((cats, dogs))
-    np.random.shuffle(data)
+    yData = np.array([0] * len(cats) + [1] * len(dogs))
 
     # scale data / 255
     data = data / 255
+
+    x_train, x_test, y_train, y_test = train_test_split(data, yData, test_size=0.2, random_state=13517013)
 
     # ML Model
     model = Sequential()
@@ -46,3 +51,7 @@ if __name__ == "__main__":
 
     pred = model.forward(data)
     print(pred)
+
+    # model.fit(x_train, y_train, epochs=10, lr=0.1, batch_size=5)
+    # pred = model.forward(x_test)
+    # print(classification_report(y_test, np.round(pred)))

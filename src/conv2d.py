@@ -3,13 +3,15 @@ from activation import *
 from util import conv2d
 
 class Conv2D:
+  # kernel_shape = W * H
   def __init__(self, num_filter, kernel_shape, pad, stride, input_shape=None, activation='relu',):
     if (len(kernel_shape) != 2):
       raise ValueError("Kernel shape must be in 2 Dimension")
     self.num_filter = num_filter
-    self.kernel = np.random.random((num_filter, input_shape[2], kernel_shape[0], kernel_shape[1]))
+    self.kernel_shape = kernel_shape
+    self.kernel = None
     self.bias = np.zeros((num_filter,))
-    self.pad = pad
+    self.pad = ((pad, pad), (pad, pad), (0, 0))
     self.stride = stride
     self.input_shape = input_shape
     self.output_shape = None
@@ -20,16 +22,22 @@ class Conv2D:
     else:
       raise ValueError("Activation function " + activation + " does not exist.")
 
-    self.updateWBO()
+    if(input_shape != None):
+      self.updateWBO()
 
   def updateInputShape(self, input_shape):
     self.input_shape = input_shape
     self.updateWBO()
 
   def updateWBO(self):
-    self.output_shape = (((2*self.pad + self.input_shape[0] - self.kernel.shape[2]) // self.stride) + 1,
-                         ((2*self.pad + self.input_shape[1] - self.kernel.shape[3]) // self.stride) + 1,
+    # Kernel = Num Filter * W * H * C_Input
+    self.kernel = np.random.random((self.num_filter, self.kernel_shape[0], self.kernel_shape[1], self.input_shape[2]))
+
+    self.output_shape = (((self.pad[0][0] + self.pad[0][1] + self.input_shape[0] - self.kernel.shape[1]) // self.stride) + 1,
+                         ((self.pad[1][0] + self.pad[1][1] + self.input_shape[1] - self.kernel.shape[2]) // self.stride) + 1,
                          self.num_filter)
+    
+    self.kernel = self.kernel * np.sqrt(6/(np.sum(self.kernel.shape) + np.sum(self.output_shape)))
 
   def getSaveData(self):
     data = {
@@ -54,10 +62,80 @@ class Conv2D:
     return np.array(result)+self.bias
 
   def calcPrevDelta(self, neuron_input, delta, debug=False):
-    return delta
+    # Axis 0 = num filter, 1 = w, 2 = h, 3 = channel
+    rotatedKernel = np.rot90(self.kernel, 2, (1, 2))  # rotasi 90 derajat 2 kali pada axis (1, 2)
+    prevDelta = []
+    activatedDerivInput = self.activation_deriv(neuron_input) # f'(z)
+
+    deltaW, deltaH, deltaC = delta.shape
+    inpBatch, inpW, inpH, inpC = activatedDerivInput.shape
+    rotKernelNum, rotKernelW, rotKernelH, rotKernelC = rotatedKernel.shape
+    
+    padW = (inpW - deltaW + rotKernelW - 1.0) / 2
+    padH = (inpH - deltaH + rotKernelH - 1.0) / 2
+    # Cek apakah pad negatif, jika iya maka buang sebagian delta, karena tidak berkontribusi terhadap weight (hasil padding)
+    if(padW < 0):
+      padW = -1 * padW
+      left, right = int(np.ceil(padW)), int(np.floor(padW))
+      delta = delta[left:-right]
+      padW = 0
+    if(padH < 0):
+      padH = -1 * padH
+      up, down = int(np.ceil(padH)), int(np.floor(padH))
+      delta = delta[:, up:-down]
+      padH = 0
+    
+    pad = (
+        (int(np.ceil(padW)), int(np.floor(padW))),
+        (int(np.ceil(padH)), int(np.floor(padH))),
+        (0, 0),
+    )
+
+    if(debug):
+      print('rotKernel shape:', rotatedKernel.shape)
+      print('delta shape:', delta.shape)
+      print('pad:', pad)
+
+    tmp = conv2d(delta, rotatedKernel, pad, 1) # full konvolusi antara rot(kernel) dan delta next layer
+    tmp = np.repeat(np.expand_dims(np.sum(tmp, axis=2), axis=2), activatedDerivInput.shape[3], axis=2) / tmp.shape[2]
+    if(debug):
+      print('tmp shape:', tmp.shape) # w, h, c
+      print('activatedDerivInput shape:', activatedDerivInput.shape) # batch, w, h, c
+    
+    for inp in activatedDerivInput:
+      prevDelta.append(tmp * inp)
+    prevDelta = np.sum(np.array(prevDelta), axis=0) / activatedDerivInput.shape[0]
+    if (debug):
+      print('prevDelta shape:', prevDelta.shape)
+      print('Conv2D delta shape:', prevDelta.shape)
+      # print('Conv2D delta:', prevDelta)
+      print('==================================================')
+    return prevDelta
 
   def backprop(self, neuron_input, delta, lr=0.001, debug=False):
-    pass
+    res = np.zeros((1, delta.shape[2], *self.kernel.shape[1:]))
+    for idx, inp in enumerate(neuron_input):
+      if(debug):
+        print('delta shape:', delta.shape) # W, H, C
+        print('inp shape:', inp.shape)
+      tempDelta = np.zeros((1, *self.kernel.shape[1:]))
+      # Looping untuk semua filter
+      for d in delta.swapaxes(2,0).swapaxes(1,2):
+        expandedD = np.expand_dims(d, (0, 3)) # 1, W, H, 1
+        stride = max(int(np.floor((inp.shape[0] - expandedD.shape[1] + self.pad[0][0] + self.pad[0][1])/(self.kernel.shape[2] - 1.0))), 1)
+        if(debug):
+          print('expandedD shape:', expandedD.shape)
+          print('stride:', stride)
+        tmp = np.repeat(conv2d(inp, expandedD, self.pad, stride), self.kernel.shape[3], axis=2) # Repeat di axis channel sebanyak channel kernel
+        tempDelta = np.vstack((tempDelta, np.expand_dims(tmp, 0))) # tempDelta = num_filter, W, H, C_Kernel
+      if(debug):
+        print('tempDelta shape:', tempDelta.shape)
+      res = np.vstack((res, np.expand_dims(tempDelta[1:], 0))) # Buang elemen pertama karena isinya 0
+    res = lr * np.sum(res, axis=0) / neuron_input.shape[0]
+    if (debug):
+      print('Conv2D backprop shape:', res.shape)
+      print('==================================================')
+    return res
 
   def updateWeight(self, deltaWeight, debug=False):
-    pass
+    self.kernel += deltaWeight
