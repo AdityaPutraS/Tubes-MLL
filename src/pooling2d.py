@@ -135,11 +135,12 @@ class Pooling2D(object):
 if __name__ == "__main__":
   np.random.seed(1)
 
-  feature_maps = np.random.randint(1, 3, (2, 2, 2, 3))
+  feature_maps = np.random.randint(0, 255, (2, 4, 4, 3))
   print("feature_maps shape:", feature_maps.shape)
   print("feature_maps:\n", feature_maps)
 
   pool = Pooling2D((2, 2), 2)
+  pool.input_shape = feature_maps.shape[1:]
   result = pool.forward(feature_maps)
   print("\n\nresult shape:", result.shape)
   print("result:\n", result)

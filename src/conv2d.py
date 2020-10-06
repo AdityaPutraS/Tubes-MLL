@@ -1,6 +1,6 @@
 import numpy as np
 from activation import *
-from util import conv2d
+from util import *
 
 class Conv2D:
   # kernel_shape = W * H
@@ -57,12 +57,6 @@ class Conv2D:
 
   def forward(self, x):
     assert self.input_shape == x.shape[1:]
-    # result = []
-
-    # for feature_map in x:
-    #   result.append(conv2d(feature_map, self.kernel, self.pad, self.stride))
-
-    # return np.array(result)+self.bias
     return conv2d_batch(x, self.kernel, self.pad, self.stride)
 
   def calcPrevDelta(self, neuron_input, delta, debug=False):
