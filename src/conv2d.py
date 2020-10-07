@@ -40,7 +40,7 @@ class Conv2D:
                          ((self.pad[2][0] + self.pad[2][1] + self.input_shape[1] - self.kernel.shape[2]) // self.stride) + 1,
                          self.num_filter)
     
-    self.kernel = self.kernel * np.sqrt(2/(np.sum(self.kernel.shape) + np.sum(self.output_shape)))
+    self.kernel = self.kernel * np.sqrt(6/(np.sum(self.kernel.shape) + np.sum(self.output_shape)))
 
   def getSaveData(self):
     data = {
@@ -124,19 +124,6 @@ class Conv2D:
     if(debug):
       print('delta shape:', delta.shape) # W, H, C
       print('neuron_input shape:', neuron_input.shape)
-      # tempDelta = np.zeros((inpBatch, *self.kernel.shape[1:]))
-      # # Looping untuk semua filter
-      # for d in deltaBatch.swapaxes(2,0).swapaxes(1,2):
-      #   expandedD = np.expand_dims(d, (0, 3)) # 1, W, H, 1
-      #   stride = max(int(np.floor((inpW - expandedD.shape[1] + self.pad[0][0] + self.pad[0][1])/(self.kernel.shape[2] - 1.0))), 1)
-      #   if(debug):
-      #     print('expandedD shape:', expandedD.shape)
-      #     print('stride:', stride)
-      #   tmp = np.repeat(conv2d(inp, expandedD, self.pad, stride), self.kernel.shape[3], axis=2) # Repeat di axis channel sebanyak channel kernel
-      #   tempDelta = np.vstack((tempDelta, np.expand_dims(tmp, 0))) # tempDelta = num_filter, W, H, C_Kernel
-      # if(debug):
-      #   print('tempDelta shape:', tempDelta.shape)
-      # res = np.vstack((res, np.expand_dims(tempDelta[1:], 0))) # Buang elemen pertama karena isinya 0
 
     stride = max(int(np.floor((inpW - deltaW + self.pad[1][0] + self.pad[1][1])/(self.kernel.shape[2] - 1.0))), 1)
     tmp = conv2d_batch_kernel(self.activation(neuron_input), delta2, self.pad, stride)
@@ -148,5 +135,5 @@ class Conv2D:
     return res, np.zeros(())
 
   def updateWeight(self, deltaWeight, deltaBias, debug=False):
-    self.kernel += deltaWeight
+    self.kernel -= deltaWeight
     # self.bias += deltaBias

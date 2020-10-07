@@ -8,6 +8,8 @@ class Sequential:
   def __init__(self):
     self.layers=[]
     self.output_shape = None
+    self.lastDeltaWeight = None
+    self.lastDeltaBias = None
 
   def add(self, layer):
     # Tambah layer baru ke model
@@ -28,10 +30,21 @@ class Sequential:
       temp = l.activation(l.forward(temp))
     return temp
 
-  def calculateError(self, x, y):
-    # Menghitung Mean Squared Error dari y dan hasil feed forward x
-    temp = self.forward(x)
-    return 0.5 * np.mean(np.square(y - temp))
+  def calculateError(self, yTrue, yPred):
+    # MSE
+    # return 0.5 * np.mean(np.square(yTrue.reshape(-1, 1) - yPred))
+
+    # Binary Cross Entropy
+    y = yTrue.reshape(-1, 1)
+    return -1 * y * np.log(yPred) - (1 - y) * np.log(1 - yPred)
+
+  def calculateLossDeriv(self, yTrue, yPred):
+    # MSE
+    # return yTrue.reshape(-1, 1) - yPred
+
+    # Binary Cross Entropy
+    y = yTrue.reshape(-1, 1)
+    return (-y / yPred) + ((1 - y) / (1 - yPred))
 
   def saveModel(self, path):
     data = {'layers' : []}
@@ -57,40 +70,38 @@ class Sequential:
     # Menghitung delta output layer
     lastLayer = self.layers[-1]
     lastX = rawInput[-1]
-    # print(lastLayer.activation_deriv(lastX).shape, yTarget.shape, yPred.shape)
-    delta = lastLayer.activation_deriv(lastX) * (yTarget.reshape(-1, 1) - yPred)
-    # delta = delta.ravel()
+
+    delta = lastLayer.activation_deriv(lastX) * self.calculateLossDeriv(yTarget, yPred)
+
     listDelta = []
-    # print('Hitung delta untuk setiap layer')
+
     # Hitung delta setiap layer menggunakan layer setelahnya, mulai dari layer terakhir
     for i in range(len(self.layers)-1, -1, -1):
-      # print('Calculating delta layer', self.layers[i])
       listDelta.append(delta)
-      # print('rawInput:', rawInput[i].shape)
-      # print('delta:', delta.shape)
       delta = self.layers[i].calcPrevDelta(rawInput[i], delta, debug=debug)
 
     return listDelta
 
   # Fit n epoch, n batch
-  def fit(self, xData, yData, lr=0.001, epochs=1, batch_size=1, debug=False):
+  def fit(self, xData, yData, lr=0.001, momentum=0, epochs=1, batch_size=1, debug=False):
     listErr = []
     for e in range(epochs):
-      self._fit_1_epoch(xData, yData, lr=lr, debug=debug, batch_size=batch_size)
+      self._fit_1_epoch(xData, yData, lr=lr, momentum=momentum, debug=debug, batch_size=batch_size)
 
       # Hitung error untuk epoch ini
-      epochErr = self.calculateError(xData, yData)
+      yPred = self.forward(xData)
+      print(classification_report(yData, np.round(yPred)))
+      epochErr = np.mean(self.calculateError(yData, yPred))
 
       # Simpan error dalam list agar bisa di plot nantinya
       listErr.append(epochErr)
 
-      # Print informasi epoch dan error
-      # if (e%100==99):
       print('Epoch ', e+1, '= error : ', epochErr)
+      print('======================================================\n\n')
     return listErr
 
   # Fit 1 epoch, n batch
-  def _fit_1_epoch(self, xData, yData, lr=0.001, batch_size=1, debug=False):
+  def _fit_1_epoch(self, xData, yData, lr=0.001, momentum=0, batch_size=1, debug=False):
     # Training dilakukan dengan konsep mini_batch, update weight dilakukan setiap {batch_size}
     numBatch = int(np.ceil(xData.shape[0] / batch_size))
 
@@ -100,14 +111,11 @@ class Sequential:
       start = iter * batch_size
       end = start + batch_size
 
-      # print(start, end)
-      # for data in zip(xData[start:end], yData[start:end]):
-        # print(data[0].shape)
-        # x = np.array([data[0]])
-        # y = np.array([data[1]])
       x = xData[start:end]
       y = yData[start:end]
+
       deltaWeight.append(self._fit_1_batch(x, y, lr=lr, debug=debug))
+
       # End for mini batch
 
     # Hitung total
@@ -118,15 +126,31 @@ class Sequential:
       for idx_batch in range(1, numBatch):
         dw += deltaWeight[idx_batch][-1-idx_layer][0]
         db += deltaWeight[idx_batch][-1-idx_layer][1]
-      print(self.layers[idx_layer], dw, db)
-      # dw /= numBatch
-      # db /= numBatch
+      dw /= (numBatch * batch_size)
+      db /= (numBatch * batch_size)
       totalDeltaWeight.append(dw)
       totalDeltaBias.append(db)
 
+    if(self.lastDeltaWeight == None):
+      self.lastDeltaWeight = totalDeltaWeight
+    else:
+      for idx in range(len(totalDeltaWeight)):
+        totalDeltaWeight[idx] = momentum * self.lastDeltaWeight[idx] + (1-momentum) * totalDeltaWeight[idx]
+      self.lastDeltaWeight = totalDeltaWeight
+
+    if(self.lastDeltaBias == None):
+      self.lastDeltaBias = totalDeltaBias
+    else:
+      for idx in range(len(totalDeltaBias)):
+        totalDeltaBias[idx] = momentum * self.lastDeltaBias[idx] + (1-momentum) * totalDeltaBias[idx]
+      self.lastDeltaBias = totalDeltaBias
+
     # Update weight
+    print("Update weight")
     for idx, layer in enumerate(self.layers):
+      print(layer, totalDeltaWeight[idx], totalDeltaBias[idx])
       layer.updateWeight(totalDeltaWeight[idx], totalDeltaBias[idx])
+    print("-------------")
 
   # Fit 1 batch
   def _fit_1_batch(self, xData, yData, lr=0.001, debug=False):

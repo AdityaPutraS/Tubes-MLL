@@ -7,7 +7,7 @@ class Flatten:
 		self.output_shape = None
 		self.activation = lambda x: x
 		self.activation_deriv = lambda x: 1
-
+	
 	def updateInputShape(self, input_shape):
 		self.input_shape = input_shape
 		output_x = 1

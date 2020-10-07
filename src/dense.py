@@ -68,81 +68,16 @@ class Dense:
         self.weight = weight.copy()
 
     def forward(self, x):
-        # Melakukan feed-forward lalu mengembalikan output yang belum di aktifasi
-        # Todo : Reshape x sesuai input_shape
         x = np.reshape(x, (-1, self.features))
-        # x = np.hstack((np.ones((x.shape[0], 1)), x))
-        # v = np.reshape(np.dot(x, self.weight), tuple(
-        #     [-1] + list(self.output_shape)))
-        # return v
         return np.dot(x, self.weight) + self.bias
 
     def calcPrevDelta(self, neuron_input, delta, debug=False):
-        '''
-          Hitung delta untuk layer sebelum layer ini dengan input layer ini & delta layer ini
-          Input layer ini = output layer sebelumnya
-        '''
-        # # Neuron input adalah output layer sebelumnya yang akan masuk sebagai input layer ini
-        # neuron_input = np.reshape(neuron_input, (-1, self.features))
-        # neuron_input = np.hstack(
-        #     (np.ones((neuron_input.shape[0], 1)), neuron_input))
-        # # Calculate delta untuk backprop layer sebelumnya
-        # prev_delta = []
-        # for i in range(self.input_shape[-1]):
-        #     # Hitung delta untuk unit ke-i layer sebelumnya
-        #     # Delta unit-i layer hPrev= f'(out(hPrev)) * sum(weight[i+1] * delta layer h)
-        #     # sum dilakukan sejumlah unit di layer ini
-        #     out = self.activation_deriv(neuron_input[0, i+1])
-        #     sum = 0
-        #     for f in range(self.units):
-        #         sum += self.weight[i+1, f] * delta[f]
-        #     prev_delta.append(out * sum)
-        # prev_delta = np.array(prev_delta)
-        # return prev_delta
         tmp = self.activation_deriv(neuron_input)
         return np.multiply(tmp, np.dot(delta, self.weight.T))
 
     def updateWeight(self, deltaWeight, deltaBias, debug=False):
-        # Update weight layer ini dengan {deltaWeight}
-        # if(debug):
-        #     print('Weight : ')
-        #     print(self.weight)
-        #     print('Delta Weight : ')
-        #     print(deltaWeight)
-        self.weight += deltaWeight
-        self.bias += deltaBias
-        # if(debug):
-        #     print('Weight Now : ')
-        #     print(self.weight)
+        self.weight -= deltaWeight
+        self.bias -= deltaBias
 
     def backprop(self, neuron_input, delta, lr=0.001, debug=False):
-        # # if(debug):
-        # #     print('Calculate backprop for:')
-        # #     print('neuron_input: ', neuron_input)
-        # #     print('delta: ', delta)
-        # #     print('lr: ', lr)
-        # #     print('input_shape: ', self.input_shape)
-        # #     print('units: ', self.units)
-        # #     print('weight_shape: ', self.weight.shape)
-        # # Neuron input adalah output layer sebelumnya yang akan menjadi input layer ini
-        # neuron_input = self.activation(np.reshape(neuron_input, (-1, self.features)))
-        # neuron_input = np.hstack(
-        #     (np.ones((neuron_input.shape[0], 1)), neuron_input))
-
-        # # Calculate delta weight
-        # deltaWeight = np.zeros(self.weight.shape)
-        # # Untuk setiap input layer ini, hitung delta weightnya
-        # for idx, batch in enumerate(neuron_input):
-        #     # Update semua isi deltaWeight yang berukuran sama seperti weight
-        #     for i in range(self.input_shape[-1] + 1):
-        #         # Untuk setiap unit di layer ini
-        #         # (fully connected neural network, setiap input layer ini terhubung dengan setiap unit di layer ini)
-        #         for j in range(self.units):
-        #             # if(debug):
-        #             #     print('    ', lr, ' * ', delta[j], ' * ', batch[i])
-        #             deltaWeight[i, j] = lr * delta[j] * batch[i]
-        #             # if(debug):
-        #             #     print('    deltaWeight: ', deltaWeight)
-
-        # return deltaWeight
         return lr * np.dot(self.activation(neuron_input.T), delta), delta
