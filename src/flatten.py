@@ -1,20 +1,21 @@
 import numpy as np
 from activation import *
 
+
 class Flatten:
 	def __init__(self):
 		self.input_shape = None
 		self.output_shape = None
 		self.activation = lambda x: x
 		self.activation_deriv = lambda x: 1
-	
+
 	def updateInputShape(self, input_shape):
 		self.input_shape = input_shape
 		output_x = 1
 		for length in input_shape:
 			output_x = output_x * length
 		self.output_shape = (output_x,)
-    
+
 	def getSaveData(self):
 		data = {
 			'name': 'Flatten',
@@ -23,7 +24,7 @@ class Flatten:
 		return data
 
 	def loadData(self, data):
-		if('input_shape' not in data):
+		if 'input_shape' not in data:
 			raise KeyError("Data invalid")
 		else:
 			input_shape = data['input_shape']
@@ -43,7 +44,7 @@ class Flatten:
 			# print('Temp flatten delta:', temp)
 			print('==================================================')
 		return temp
-	
+
 	def backprop(self, neuron_input, delta, lr=0.001, debug=False):
 		return np.zeros(()), np.zeros(())
 

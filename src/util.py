@@ -2,29 +2,8 @@ import numpy as np
 import cv2
 import os
 
-# Utility
 
-# mat = W * H * C
-# kernel = num_filter * C_Kernel * W_Kernel * H_Kernel (deprec)
-# kernel = num_filter * W_Kernel * H_Kernel * C_Kernel
-# Output = (_ * _ * num_filter)
-def conv2d(mat, kernel, pad, stride):
-  padded_mat = np.pad(mat, pad)
-  padded_mat_x, padded_mat_y, padded_mat_c = padded_mat.shape
-  num_filter, kernel_x, kernel_y, kernel_c = kernel.shape
-  output_shape = ((padded_mat_x - kernel_x) // stride + 1, (padded_mat_y - kernel_y) // stride + 1, num_filter)
-  output = np.zeros(output_shape)
-  for _filter in range(num_filter):
-    for i in range(output_shape[0]):
-      start_x = i*stride
-      end_x = start_x + kernel_x
-      for j in range(output_shape[1]):
-        start_y = j*stride
-        end_y = start_y + kernel_y 
-        for chan in range(padded_mat_c):
-          output[i, j, _filter] += np.tensordot(padded_mat[start_x:end_x, start_y:end_y, chan], kernel[_filter, :, :, min(chan, kernel_c-1)]) 
-        output[b, i, j, _filter] /= padded_mat_c
-  return output
+# Utility functions
 
 # mat = batch * W * H * C
 # kernel = num_filter * W_Kernel * H_Kernel * C_Kernel
@@ -35,12 +14,7 @@ def conv2d_batch(mat, kernel, pad, stride):
   num_filter, kernel_x, kernel_y, kernel_c = kernel.shape
   output_shape = (padded_mat_batch, (padded_mat_x - kernel_x) // stride + 1, (padded_mat_y - kernel_y) // stride + 1, num_filter)
   output = np.zeros(output_shape)
-  # print('padded_mat:',padded_mat.shape)
-  # print('kernel:',kernel.shape)
-  # print('output_shape:',output_shape)
-  # print('pad:', pad)
-  # print('stride:', stride)
-  # print('==========')
+
   for b in range(padded_mat_batch):
     for _filter in range(num_filter):
       for i in range(output_shape[1]):
@@ -68,6 +42,7 @@ def conv2d_batch_kernel(mat, kernel, pad, stride):
     raise ValueError("padded_mat_batch " + str(padded_mat_batch) + " does not match with kernel_batch " + str(kernel_batch))
   output_shape = (padded_mat_batch, (padded_mat_x - kernel_x) // stride + 1, (padded_mat_y - kernel_y) // stride + 1, num_filter)
   output = np.zeros(output_shape)
+
   for b in range(padded_mat_batch):
     for _filter in range(num_filter):
       for i in range(output_shape[1]):

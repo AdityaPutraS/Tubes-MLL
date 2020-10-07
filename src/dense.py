@@ -12,10 +12,10 @@ class Dense:
         self.features = None
         self.activation_name = activation
 
-        if(activation == 'sigmoid'):
+        if (activation == 'sigmoid'):
             self.activation = sigmoid
             self.activation_deriv = sigmoid_deriv
-        elif(activation == 'relu'):
+        elif (activation == 'relu'):
             self.activation = relu
             self.activation_deriv = relu_deriv
         elif (activation == 'leaky_relu'):
@@ -32,7 +32,7 @@ class Dense:
 
     def updateWBO(self):
         # Update Weight, Bias, Output shape agar sesuai dengan units dan input_shape
-        if(self.input_shape != None):
+        if (self.input_shape != None):
             # Handle kasus input shape berbentuk n-dimensi, ratakan menjadi (data_size, feature)
             # data_size = banyak data yang akan masuk nantinya (bervariasi)
             # feature = hasil kali seluruh fitur dari data, misal 1 data berbentuk array 2d (3, 4) maka feature = 3 * 4
@@ -58,14 +58,14 @@ class Dense:
                   'bias': self.bias.tolist()
                 }}
         return data
-    
+
     def loadData(self, data):
-      if('weight' not in data):
+      if ('weight' not in data):
         raise KeyError("Data invalid")
       else:
         weight = np.array(data['weight'])
         self.bias = np.array(data['bias']).copy()
-        if(weight.shape != self.weight.shape):
+        if (weight.shape != self.weight.shape):
           raise TypeError("Weight shape invalid")
         else:
           self.set_weight(weight)

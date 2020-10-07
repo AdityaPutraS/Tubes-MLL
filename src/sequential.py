@@ -2,6 +2,8 @@ import numpy as np
 import json
 from dense import *
 from flatten import *
+from sklearn.metrics import classification_report
+
 
 class Sequential:
   # Representasi suatu model dimana perhitungan dilakukan sekuensial (layer per layer)

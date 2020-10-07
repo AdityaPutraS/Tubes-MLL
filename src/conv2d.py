@@ -2,6 +2,7 @@ import numpy as np
 from activation import *
 from util import *
 
+
 class Conv2D:
   # kernel_shape = W * H
   def __init__(self, num_filter, kernel_shape, pad, stride, input_shape=None, activation='leaky_relu',):

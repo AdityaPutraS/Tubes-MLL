@@ -1,6 +1,7 @@
 import numpy as np
 from util import pooling2d
 
+
 class Pooling2D(object):
   def __init__(self, pool_shape, stride, padding = 0, pool_mode = 'max'):
     # FEATURE MAP INPUT SHAPE:
@@ -131,24 +132,3 @@ class Pooling2D(object):
   def updateWeight(self, deltaWeight, deltaBias, debug=False):
     # no weight to update, only pass the error to previous layer
     pass
-
-if __name__ == "__main__":
-  np.random.seed(1)
-
-  feature_maps = np.random.randint(0, 255, (2, 4, 4, 3))
-  print("feature_maps shape:", feature_maps.shape)
-  print("feature_maps:\n", feature_maps)
-
-  pool = Pooling2D((2, 2), 2)
-  pool.input_shape = feature_maps.shape[1:]
-  result = pool.forward(feature_maps)
-  print("\n\nresult shape:", result.shape)
-  print("result:\n", result)
-
-  delta = np.random.random(result.shape)
-  print("\n\ndelta shape:", delta.shape)
-  print("delta:\n", delta)
-
-  dx = pool.calcPrevDelta(feature_maps, delta)
-  print("\n\ndx shape:", dx.shape)
-  print("dx:\n", dx)

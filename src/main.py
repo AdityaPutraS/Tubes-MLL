@@ -17,6 +17,7 @@ from dense import Dense
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import classification_report
 
+
 if __name__ == "__main__":
     np.random.seed(13517013)
     image_size = (30, 30)
