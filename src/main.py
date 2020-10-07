@@ -58,3 +58,5 @@ if __name__ == "__main__":
     
     pred_test = model.forward(x_test)
     print(classification_report(y_test, np.round(pred_test)))
+
+    model.saveModel('./tes.json')

@@ -47,7 +47,7 @@ class Pooling2D(object):
     return data
 
   def loadData(self, data):
-    pass # TBD
+    pass
 
   def forward(self, feature_maps):
     assert self.input_shape == feature_maps.shape[1:]

@@ -12,10 +12,12 @@ class Conv2D:
     self.kernel_shape = kernel_shape
     self.kernel = None
     self.bias = np.zeros((num_filter,))
+    self.pad_size = pad
     self.pad = ((0, 0), (pad, pad), (pad, pad), (0, 0))
     self.stride = stride
     self.input_shape = input_shape
     self.output_shape = None
+    self.activation_name = activation
 
     if (activation == 'relu'):
       self.activation = relu # detector part
@@ -49,15 +51,22 @@ class Conv2D:
   def getSaveData(self):
     data = {
       'name': 'Conv2D',
-      'kernel': self.kernel,
-      'pad': self.pad,
-      'stride': self.stride
+      'num_filter': self.num_filter,
+      'kernel_shape': self.kernel_shape,
+      'pad': self.pad_size,
+      'stride': self.stride,
+      'input_shape': self.input_shape,
+      'activation': self.activation_name,
+      'data': {
+        'kernel': self.kernel.tolist(),
+        'bias': self.bias.tolist()
+      }
     }
-
     return data
 
   def loadData(self, data):
-    pass
+    self.kernel = np.array(data['kernel'].copy())
+    self.bias = np.array(data['bias'].copy())
 
   def forward(self, x):
     assert self.input_shape == x.shape[1:]

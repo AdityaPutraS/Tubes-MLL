@@ -1,6 +1,8 @@
 import numpy as np
 import json
 from dense import *
+from conv2d import *
+from pooling2d import *
 from flatten import *
 from sklearn.metrics import classification_report
 
@@ -62,9 +64,13 @@ class Sequential:
         if(layer['name'] == 'Dense'):
           self.add(Dense(layer['unit'], input_shape=layer['input_shape'], activation=layer['activation']))
           self.layers[-1].loadData(layer['data'])
+        elif(layer['name'] == 'Conv2D'):
+          self.add(Conv2D(layer['num_filter'], tuple(layer['kernel_shape']), pad=layer['pad'], stride=layer['stride'], input_shape=tuple(layer['input_shape']), activation=layer['activation']))
+          self.layers[-1].loadData(layer['data'])
+        elif(layer['name'] == 'Pooling2D'):
+          self.add(Pooling2D(tuple(layer['pool_shape']), stride=layer['stride'], padding=layer['padding'], pool_mode=layer['pool_mode']))
         elif(layer['name'] == 'Flatten'):
           self.add(Flatten())
-          self.layers[-1].loadData(layer['data'])
         else:
           raise TypeError("Unknown layer")
 
