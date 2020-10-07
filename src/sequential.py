@@ -85,10 +85,13 @@ class Sequential:
     return listDelta
 
   # Fit n epoch, n batch
-  def fit(self, xData, yData, lr=0.001, momentum=0, epochs=1, batch_size=1, debug=False):
+  def fit(self, xData, yData, lr=0.001, momentum=0, epochs=1, lr_decay=0, batch_size=1, debug=False):
     listErr = []
+    lrNow = lr
     for e in range(epochs):
-      self._fit_1_epoch(xData, yData, lr=lr, momentum=momentum, debug=debug, batch_size=batch_size)
+      print('Learning rate:', lrNow)
+      self._fit_1_epoch(xData, yData, lr=lrNow, momentum=momentum, debug=debug, batch_size=batch_size)
+      lrNow *= (1. / (1. + lr_decay * e))
 
       # Hitung error untuk epoch ini
       yPred = self.forward(xData)
@@ -98,7 +101,7 @@ class Sequential:
       # Simpan error dalam list agar bisa di plot nantinya
       listErr.append(epochErr)
 
-      print('Epoch ', e+1, '= error : ', epochErr)
+      print('Epoch:', e+1, '= error : ', epochErr)
       print('======================================================\n\n')
     return listErr
 

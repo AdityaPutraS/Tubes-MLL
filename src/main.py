@@ -54,7 +54,7 @@ if __name__ == "__main__":
     print(classification_report(y_train, np.round(pred)))
     print('Initial error:', np.mean(model.calculateError(y_train, pred)))
 
-    history = model.fit(x_train, y_train, epochs=25, lr=0.04, momentum=0.3, batch_size=10)
+    history = model.fit(x_train, y_train, epochs=25, lr=0.04, momentum=0.3, lr_decay=0, batch_size=10)
     
     pred_test = model.forward(x_test)
     print(classification_report(y_test, np.round(pred_test)))
