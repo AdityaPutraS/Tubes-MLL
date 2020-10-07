@@ -4,19 +4,25 @@ from activation import *
 
 class Dense:
     # Representasi 1 layer dalam ANN yang berisi beberapa perceptron
-    def __init__(self, units, input_shape=None, activation=None):
+    def __init__(self, units, input_shape=None, activation='sigmoid'):
         self.units = units
         # Input shape menyatakan bentuk input yang masuk ke layer ini
         self.input_shape = input_shape
         # Features menyatakan jumlah fitur dari input (akan dihitung dari input_shape)
         self.features = None
-        self.activation_name = 'sigmoid' if activation == None else activation
-        if(activation == None or activation == 'sigmoid'):
+        self.activation_name = activation
+
+        if(activation == 'sigmoid'):
             self.activation = sigmoid
             self.activation_deriv = sigmoid_deriv
         elif(activation == 'relu'):
             self.activation = relu
             self.activation_deriv = relu_deriv
+        elif (activation == 'leaky_relu'):
+            self.activation = leaky_relu
+            self.activation_deriv = leaky_relu_deriv
+        else:
+            raise ValueError("Activation function " + activation + " does not exist.")
 
         self.updateWBO()
 

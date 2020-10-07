@@ -4,7 +4,7 @@ from util import *
 
 class Conv2D:
   # kernel_shape = W * H
-  def __init__(self, num_filter, kernel_shape, pad, stride, input_shape=None, activation='relu',):
+  def __init__(self, num_filter, kernel_shape, pad, stride, input_shape=None, activation='leaky_relu',):
     if (len(kernel_shape) != 2):
       raise ValueError("Kernel shape must be in 2 Dimension")
     self.num_filter = num_filter
@@ -22,6 +22,9 @@ class Conv2D:
     elif (activation == 'sigmoid'):
       self.activation = sigmoid
       self.activation_deriv = sigmoid_deriv
+    elif (activation == 'leaky_relu'):
+      self.activation = leaky_relu
+      self.activation_deriv = leaky_relu_deriv
     else:
       raise ValueError("Activation function " + activation + " does not exist.")
 
