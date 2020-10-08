@@ -37,7 +37,7 @@ if __name__ == "__main__":
 
     data = (data / 255 - 0.5) * 2
 
-    x_train, x_test, y_train, y_test = train_test_split(data, yData, test_size=0.2, random_state=13517013)
+    x_train, x_test, y_train, y_test = train_test_split(data, yData, test_size=0.1, random_state=13517013)
 
     # ML Model
     model = Sequential()
