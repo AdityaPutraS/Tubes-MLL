@@ -28,7 +28,7 @@ class RNN(object):
       raise ValueError("Activation function " + activation + " does not exist.")
 
     self.bias_xh = self.initWeight((self.units,)) # bias for input to hidden
-    # 3 weights
+    # 2 weights
     self.U = None
     self.W = None
 
@@ -50,7 +50,7 @@ class RNN(object):
   def updateWBO(self):
     sequence_length = self.input_shape[1]
 
-    # Initialize 3 weight matrices (U, V, W)
+    # Initialize 2 weight matrices (U, W)
     self.U = self.initWeight((self.units, sequence_length))
     self.W = self.initWeight((self.units, self.units))
 
@@ -92,7 +92,7 @@ class RNN(object):
     for timestep in range(self.input_shape[0]):
       ux = self.U @ x_data[timestep]
       wh = self.W @ self.h[timestep]
-      ht = np.tanh(ux + (wh + self.bias_xh))
+      ht = self.activation(ux + (wh + self.bias_xh))
       self.h.append(ht)
     if (self.return_sequences == True):
       return self.h
