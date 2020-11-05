@@ -28,3 +28,21 @@ def tanh(x):
 
 def tanh_deriv(x):
   return (1 - np.square(np.tanh(x)))
+
+# Softmax function
+def softmax(x):
+	ex = np.exp(x - np.max(x))
+	return ex / ex.sum()
+
+def softmax_deriv(x):
+  return x
+
+def softmax_time_distributed(x):
+  result = []
+  for xx in x:
+    ex = np.exp(xx - np.max(xx))
+    result.append(ex/ex.sum())
+  return result
+
+def softmax_time_distributed_deriv(x):
+  return x

@@ -2,16 +2,15 @@ import numpy as np
 from activation import *
 
 class RNN(object):
-  def __init__(self, units, initialize_weight='random', input_shape=None, activation='tanh', return_sequences=False):
+  def __init__(self, units, weight_initializer='random', input_shape=None, activation='tanh', return_sequences=False):
     self.units = units
-    self.initialize_weight = initialize_weight
+    self.weight_initializer = weight_initializer
     self.input_shape = input_shape
     self.return_sequences = return_sequences
     self.activation_name = activation
     self.output_shape = None
-    self.h = []
-    self.h.append(self.initWeight((self.units, )))
-    
+    self.h = [np.zeros((self.units, ))]
+
     if (self.activation_name == 'relu'):
       self.activation = relu
       self.activation_deriv = relu_deriv
@@ -36,11 +35,11 @@ class RNN(object):
       self.updateWBO()
   
   def initWeight(self, size):
-    if self.initialize_weight == 'random':
+    if self.weight_initializer == 'random':
       return np.random.random(size)
-    elif self.initialize_weight == 'zeros':
+    elif self.weight_initializer == 'zeros':
       return np.zeros(size)
-    elif self.initialize_weight == 'ones':
+    elif self.weight_initializer == 'ones':
       return np.ones(size)
 
   def updateInputShape(self, input_shape):
@@ -60,7 +59,7 @@ class RNN(object):
     else:
       assert self.return_sequences == False, "Return Sequences value must be 'True' or 'False'."
       # output = returning last value of output sequence
-      self.output_shape = (self.units)
+      self.output_shape = (self.units, )
 
   def getSaveData(self):
     return {
@@ -82,20 +81,26 @@ class RNN(object):
     self.W = np.array(data['W'].copy())
 
   def forward(self, x_data):
-    # self.U = np.array([[0.1, 0.15, 0.2, 0.3],
-    #                   [0.15, 0.2, 0.3, 0.1],
-    #                   [0.2, 0.3, 0.1, 0.15]])
-    # self.W = np.array([[0.5, 0.5, 0.5],
-    #                   [0.5, 0.5, 0.5],
-    #                   [0.5, 0.5, 0.5]])
-    # self.bias_xh = np.array([0.1, 0.1, 0.1])
+    self.U = np.array([[0.1, 0.15, 0.2, 0.3],
+                      [0.15, 0.2, 0.3, 0.1],
+                      [0.2, 0.3, 0.1, 0.15]])
+    self.W = np.array([[0.5, 0.5, 0.5],
+                      [0.5, 0.5, 0.5],
+                      [0.5, 0.5, 0.5]])
+    self.bias_xh = np.array([0.1, 0.1, 0.1])
+
+    # Init h0
+    self.h = [np.zeros((self.units, ))]
+    ht = self.h[0]
+
     for timestep in range(self.input_shape[0]):
       ux = self.U @ x_data[timestep]
-      wh = self.W @ self.h[timestep]
-      ht = self.activation(ux + (wh + self.bias_xh))
+      wh = self.W @ ht
+      ht = ux + (wh + self.bias_xh)
       self.h.append(ht)
+      ht = self.activation(ht)
     if (self.return_sequences == True):
-      return self.h
+      return self.h[1:]
     else:
       return self.h[-1]
 
