@@ -1,6 +1,7 @@
 import numpy as np
 from activation import *
 
+
 class RNN(object):
   def __init__(self, units, weight_initializer='random', input_shape=None, activation='tanh', return_sequences=False):
     self.units = units
@@ -33,7 +34,8 @@ class RNN(object):
 
     if (self.input_shape != None):
       self.updateWBO()
-  
+
+
   def initWeight(self, size):
     if self.weight_initializer == 'random':
       return np.random.random(size)
@@ -42,9 +44,11 @@ class RNN(object):
     elif self.weight_initializer == 'ones':
       return np.ones(size)
 
+
   def updateInputShape(self, input_shape):
     self.input_shape = input_shape
     self.updateWBO()
+
 
   def updateWBO(self):
     sequence_length = self.input_shape[0]
@@ -60,6 +64,7 @@ class RNN(object):
       # output = returning last value of output sequence
       self.output_shape = (self.units, )
 
+
   def getSaveData(self):
     return {
       "name": "RNN",
@@ -73,11 +78,13 @@ class RNN(object):
       }
     }
 
+
   def loadData(self, data):
     self.bias_xh = np.array(data['bias_xh'].copy())
 
     self.U = np.array(data['U'].copy())
     self.W = np.array(data['W'].copy())
+
 
   def forward(self, x_data):
     # Init h0
@@ -95,12 +102,15 @@ class RNN(object):
     else:
       return self.h[-1]
 
+
   # Backward Propagation Methods
   def calcPrevDelta(self, neuron_input, delta, debug=False):
     pass
 
+
   def backprop(self, neuron_input, delta, lr=0.001, debug=False):
     pass
+
 
   def updateWeight(self, deltaWeight, deltaBias, debug=False):
     pass
