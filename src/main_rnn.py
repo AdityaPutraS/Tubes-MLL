@@ -3,6 +3,7 @@ from dense import Dense
 from sequential import Sequential
 import numpy as np
 
+
 def createModel(hidden_size, output_size):
 	model = Sequential()
 	model.add(RNN(hidden_size, return_sequences=True, weight_initializer='zeros', input_shape=(4,4)))

@@ -35,7 +35,7 @@ def softmax(x):
 	return ex / ex.sum()
 
 def softmax_deriv(x):
-  return x
+  return x # To Be Implemented
 
 def softmax_time_distributed(x):
   result = []
@@ -45,4 +45,4 @@ def softmax_time_distributed(x):
   return result
 
 def softmax_time_distributed_deriv(x):
-  return x
+  return x # To Be Implemented
