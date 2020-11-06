@@ -99,22 +99,12 @@ class Dense:
         self.weight = weight.copy()
 
     def forward(self, x):
-        self.weight = [
-                        [0.1, 0.2, 0.3],
-                        [0.2, 0.3, 0.1],
-                        [0.3, 0.1, 0.2],
-                        [0.1, 0.1, 0.1]
-                    ]
-        self.bias = 0.1
-        self.weight = np.array(self.weight).T
         if (self.time_distributed):
-            print(x)
             x = np.reshape(x, (self.input_shape[0], self.features))
             result = np.dot(x[0:1], self.weight) + self.bias
             for i in range(1, self.input_shape[0]):
                 temp = np.dot(x[i:i+1], self.weight) + self.bias
                 result = np.vstack((result, temp))
-                print(result)
             return result
         else:
             x = np.reshape(x, (-1, self.features))

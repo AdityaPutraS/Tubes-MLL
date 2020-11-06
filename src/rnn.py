@@ -47,10 +47,9 @@ class RNN(object):
     self.updateWBO()
 
   def updateWBO(self):
-    sequence_length = self.input_shape[1]
-
+    sequence_length = self.input_shape[0]
     # Initialize 2 weight matrices (U, W)
-    self.U = self.initWeight((self.units, sequence_length))
+    self.U = self.initWeight((self.units, self.input_shape[1]))
     self.W = self.initWeight((self.units, self.units))
 
     if (self.return_sequences == True):
@@ -81,18 +80,10 @@ class RNN(object):
     self.W = np.array(data['W'].copy())
 
   def forward(self, x_data):
-    self.U = np.array([[0.1, 0.15, 0.2, 0.3],
-                      [0.15, 0.2, 0.3, 0.1],
-                      [0.2, 0.3, 0.1, 0.15]])
-    self.W = np.array([[0.5, 0.5, 0.5],
-                      [0.5, 0.5, 0.5],
-                      [0.5, 0.5, 0.5]])
-    self.bias_xh = np.array([0.1, 0.1, 0.1])
-
     # Init h0
+    # assert x_data.shape[1] == self.input_shape[0] and x_data.shape[0] == self.input_shape[1]
     self.h = [np.zeros((self.units, ))]
     ht = self.h[0]
-
     for timestep in range(self.input_shape[0]):
       ux = self.U @ x_data[timestep]
       wh = self.W @ ht
